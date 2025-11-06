@@ -1,0 +1,32 @@
+# Xcode
+.DS_Store
+*/xcuserdata/
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xcworkspace/
+!default.xcworkspace
+xcuserdata/
+profile
+*.moved-aside
+DerivedData/
+*.hmap
+*.ipa
+*.xcuserstate
+*.xcscmblueprint
+
+# Firebase
+GoogleService-Info.plist
+
+# Swift Package Manager
+.build/
+/*.xcodeproj
+Package.resolved
+
+# Swift
+*.swp
+*.swo
+
+# Other
+fastlane/report.xml
