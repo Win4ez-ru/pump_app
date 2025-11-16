@@ -20,3 +20,9 @@ struct AuthenticationView: View {
         .environmentObject(authManager)
     }
 }
+
+struct AuthenticationView_Previews: PreviewProvider {
+    static var previews: some View {
+        AuthenticationView()
+    }
+}
