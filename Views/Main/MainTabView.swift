@@ -5,6 +5,7 @@ struct MainTabView: View {
     
     var body: some View {
         TabView {
+            // Вкладка "Главная"
             NavigationView {
                 HomeView()
             }
@@ -13,12 +14,31 @@ struct MainTabView: View {
                 Text("Главная")
             }
             
+            // Вкладка "Профиль"
             NavigationView {
                 ProfileView()
             }
             .tabItem {
                 Image(systemName: "person.fill")
                 Text("Профиль")
+            }
+            
+            // Вкладка "Чаты"
+            NavigationView {
+                ChatListView()
+            }
+            .tabItem {
+                Image(systemName: "message.fill")
+                Text("Чаты")
+            }
+            
+            // Вкладка "Настройки"
+            NavigationView {
+                SettingsView()
+            }
+            .tabItem {
+                Image(systemName: "gearshape.fill")
+                Text("Настройки")
             }
         }
         .accentColor(.blue)
