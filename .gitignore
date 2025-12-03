@@ -37,3 +37,6 @@ fastlane/test_output
 # Misc
 *.orig
 *.log
+.DS_Store
+*.DS_Store
+**/.DS_Store
