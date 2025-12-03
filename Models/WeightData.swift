@@ -2,7 +2,7 @@
 import Foundation
 
 struct WeightData: Identifiable, Codable {
-    let id = UUID()
+    var id = UUID()
     let date: Date
     let weight: Double
     

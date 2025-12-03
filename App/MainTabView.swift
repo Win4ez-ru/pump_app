@@ -1,4 +1,3 @@
-// App/MainTabView.swift
 import SwiftUI
 
 struct MainTabView: View {
@@ -7,9 +6,15 @@ struct MainTabView: View {
     @StateObject private var profileViewModel: ProfileViewModel
     @StateObject private var settingsViewModel = SettingsViewModel()
     
+    // ДОБАВЬТЕ эту переменную
+    @StateObject private var trainingService: TrainingService
+    
     init() {
-        // Создаем trainingService для TrainingViewModel
+        // СОЗДАЕМ trainingService как StateObject
         let trainingService = TrainingService()
+        _trainingService = StateObject(wrappedValue: trainingService)
+        
+        // Передаем его в TrainingViewModel
         _trainingViewModel = StateObject(wrappedValue: TrainingViewModel(trainingService: trainingService))
         
         // Создаем authService для ProfileViewModel
@@ -30,7 +35,9 @@ struct MainTabView: View {
             
             NavigationView {
                 TrainingCalendarView()
-                    .environmentObject(trainingViewModel)
+                    // ИСПОЛЬЗУЙТЕ ОДИНАКОВЫЕ ЭКЗЕМПЛЯРЫ:
+                    .environmentObject(trainingService)        // ← тот же trainingService
+                    .environmentObject(trainingViewModel)      // ← тот же trainingViewModel
             }
             .tabItem {
                 Image(systemName: "calendar")
