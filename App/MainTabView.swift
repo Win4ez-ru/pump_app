@@ -4,7 +4,6 @@ struct MainTabView: View {
     @EnvironmentObject private var authService: AuthService
     @StateObject private var trainingViewModel: TrainingViewModel
     @StateObject private var profileViewModel: ProfileViewModel
-    @StateObject private var settingsViewModel = SettingsViewModel()
     
     // ДОБАВЬТЕ эту переменную
     @StateObject private var trainingService: TrainingService
@@ -53,6 +52,14 @@ struct MainTabView: View {
             }
             
             NavigationView {
+                CareerView()
+            }
+            .tabItem {
+                Image(systemName: "chart.line.uptrend.xyaxis")
+                Text("Карьера")
+            }
+            
+            NavigationView {
                 ProfileView()
                     .environmentObject(profileViewModel)
             }
@@ -61,14 +68,6 @@ struct MainTabView: View {
                 Text("Профиль")
             }
             
-            NavigationView {
-                SettingsView()
-                    .environmentObject(settingsViewModel)
-            }
-            .tabItem {
-                Image(systemName: "gearshape.fill")
-                Text("Настройки")
-            }
         }
         .accentColor(.blue)
     }

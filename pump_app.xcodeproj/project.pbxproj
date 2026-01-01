@@ -81,6 +81,14 @@
 		5EF5469B2EDC2E6D006736FB /* WeightData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeightData.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		6DD30DF82F06F82E00CA3753 /* Career */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Career;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
 /* Begin PBXFrameworksBuildPhase section */
 		5EAB70522ED8ADB00036DF6F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
@@ -139,6 +147,7 @@
 		5EF546762EDC25E0006736FB /* Features */ = {
 			isa = PBXGroup;
 			children = (
+				6DD30DF82F06F82E00CA3753 /* Career */,
 				5EF5468D2EDC2B4D006736FB /* Home */,
 				5EF5467E2EDC2652006736FB /* Settings */,
 				5EF5467D2EDC264A006736FB /* Profile */,
@@ -276,6 +285,9 @@
 			buildRules = (
 			);
 			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				6DD30DF82F06F82E00CA3753 /* Career */,
 			);
 			name = pump_app;
 			packageProductDependencies = (

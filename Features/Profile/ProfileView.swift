@@ -2,8 +2,10 @@ import SwiftUI
 
 struct ProfileView: View {
     @EnvironmentObject private var authManager: AuthService
+    @StateObject private var viewModel = SettingsViewModel()
     @State private var showingEditProfile = false
     @State private var showingPrivacySettings = false
+    @State private var showingPayments = false
     
     private var user: User? {
         authManager.currentUser
@@ -15,14 +17,118 @@ struct ProfileView: View {
                 // Profile header
                 profileHeaderView
                 
-                // Statistics
-                statisticsView
+                // User balance
+                BalanceCard()
                 
-                // Account info
-                accountInfoView
+                // Основные настройки (ВЗЯТО ИЗ SETTINGSVIEW)
+                VStack(alignment: .leading, spacing: 15) {
+                    Text("Основные")
+                        .font(.headline)
+                        .padding(.horizontal)
+                    
+                    SettingsRow(
+                        icon: "bell.fill",
+                        title: "Уведомления",
+                        subtitle: "Настройка уведомлений",
+                        hasSwitch: true,
+                        isOn: $viewModel.isNotificationsEnabled
+                    )
+                    
+                    SettingsRow(
+                        icon: "eye.fill",
+                        title: "Приватность",
+                        subtitle: "Настройки конфиденциальности"
+                    )
+                    .onTapGesture {
+                        showingPrivacySettings = true
+                    }
+                    
+                    SettingsRow(
+                        icon: "paintbrush.fill",
+                        title: "Тема",
+                        subtitle: "Светлая / Темная",
+                        hasSwitch: true,
+                        isOn: $viewModel.isDarkModeEnabled
+                    )
+                }
                 
-                // Actions
-                actionsView
+                // Аккаунт (ВЗЯТО ИЗ SETTINGSVIEW)
+                VStack(alignment: .leading, spacing: 15) {
+                    Text("Аккаунт")
+                        .font(.headline)
+                        .padding(.horizontal)
+                    
+                    SettingsRow(
+                        icon: "person.fill",
+                        title: "Данные аккаунта",
+                        subtitle: "Изменить email, пароль"
+                    )
+                    .onTapGesture {
+                        showingEditProfile = true
+                    }
+                    
+                    SettingsRow(
+                        icon: "creditcard.fill",
+                        title: "Платежи",
+                        subtitle: "Способы оплаты"
+                    )
+                    .onTapGesture {
+                        showingPayments = true
+                    }
+                    
+                    if authManager.hasSkippedLogin {
+                        SettingsRow(
+                            icon: "person.badge.plus",
+                            title: "Зарегистрироваться",
+                            subtitle: "Создать аккаунт",
+                            color: .blue
+                        )
+                    }
+                }
+                
+                // О приложении (ВЗЯТО ИЗ SETTINGSVIEW)
+                VStack(alignment: .leading, spacing: 15) {
+                    Text("О приложении")
+                        .font(.headline)
+                        .padding(.horizontal)
+                    
+                    SettingsRow(
+                        icon: "info.circle.fill",
+                        title: "Версия",
+                        subtitle: "1.0.0"
+                    )
+                    
+                    SettingsRow(
+                        icon: "shield.fill",
+                        title: "Политика конфиденциальности",
+                        subtitle: "Как мы используем ваши данные"
+                    )
+                    
+                    SettingsRow(
+                        icon: "doc.text.fill",
+                        title: "Условия использования",
+                        subtitle: "Правила сервиса"
+                    )
+                }
+                
+                // Информация о текущем режиме (ВЗЯТО ИЗ SETTINGSVIEW)
+                if authManager.hasSkippedLogin {
+                    VStack(spacing: 10) {
+                        Text("Гостевой режим")
+                            .font(.headline)
+                            .foregroundColor(.orange)
+                        
+                        Text("Некоторые функции ограничены. Для полного доступа зарегистрируйтесь.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    }
+                    .padding()
+                    .background(Color.orange.opacity(0.1))
+                    .cornerRadius(12)
+                    .padding(.horizontal)
+                }
                 
                 // Logout button
                 if authManager.isAuthenticated {
@@ -33,11 +139,17 @@ struct ProfileView: View {
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Профиль")
+        .onAppear {
+            viewModel.loadSettings()
+        }
         .sheet(isPresented: $showingEditProfile) {
             EditProfileView()
         }
         .sheet(isPresented: $showingPrivacySettings) {
             PrivacySettingsView()
+        }
+        .sheet(isPresented: $showingPayments) {
+            PaymentsView()
         }
     }
     
@@ -76,112 +188,6 @@ struct ProfileView: View {
         .padding(.horizontal)
     }
     
-    private var statisticsView: some View {
-        VStack(alignment: .leading, spacing: 15) {
-            Text("Статистика")
-                .font(.headline)
-                .padding(.horizontal)
-            
-            HStack(spacing: 15) {
-                StatCard(
-                    title: "Тренировок",
-                    value: "12",
-                    icon: "dumbbell",
-                    color: .blue
-                )
-                
-                StatCard(
-                    title: "Часов",
-                    value: "24",
-                    icon: "clock",
-                    color: .green
-                )
-                
-                StatCard(
-                    title: "Дней подряд",
-                    value: "7",
-                    icon: "flame",
-                    color: .orange
-                )
-            }
-            .padding(.horizontal)
-        }
-    }
-    
-    private var accountInfoView: some View {
-        VStack(alignment: .leading, spacing: 15) {
-            Text("Информация об аккаунте")
-                .font(.headline)
-                .padding(.horizontal)
-            
-            VStack(spacing: 1) {
-                InfoRow(
-                    icon: "calendar",
-                    title: "Дата регистрации",
-                    value: user?.createdAt.formatted(date: .abbreviated, time: .omitted) ?? "Неизвестно"
-                )
-                
-                InfoRow(
-                    icon: "person.fill",
-                    title: "Тип аккаунта",
-                    value: authManager.hasSkippedLogin ? "Гость" : "Зарегистрированный"
-                )
-                
-                InfoRow(
-                    icon: "shield.fill",
-                    title: "Статус",
-                    value: "Активный"
-                )
-            }
-            .padding(.horizontal)
-        }
-    }
-    
-    private var actionsView: some View {
-        VStack(alignment: .leading, spacing: 15) {
-            Text("Действия")
-                .font(.headline)
-                .padding(.horizontal)
-            
-            VStack(spacing: 1) {
-                if authManager.hasSkippedLogin {
-                    ActionRow(
-                        title: "Зарегистрироваться",
-                        icon: "person.badge.plus",
-                        color: .blue
-                    ) {
-                        // Navigation to registration
-                        print("Переход к регистрации")
-                    }
-                }
-                
-                ActionRow(
-                    title: "Редактировать профиль",
-                    icon: "pencil",
-                    color: .green
-                ) {
-                    showingEditProfile = true
-                }
-                
-                ActionRow(
-                    title: "Настройки приватности",
-                    icon: "lock.fill",
-                    color: .purple
-                ) {
-                    showingPrivacySettings = true
-                }
-                
-                ActionRow(
-                    title: "Справка и поддержка",
-                    icon: "questionmark.circle",
-                    color: .gray
-                ) {
-                    print("Открыть справку")
-                }
-            }
-            .padding(.horizontal)
-        }
-    }
     
     private var logoutButton: some View {
         Button(action: {
@@ -199,88 +205,82 @@ struct ProfileView: View {
     }
 }
 
-// MARK: - Supporting Views
-struct StatCard: View {
-    let title: String
-    let value: String
+// MARK: - SettingsRow (ВЗЯТО ИЗ SETTINGSVIEW)
+struct SettingsRow: View {
     let icon: String
-    let color: Color
+    let title: String
+    let subtitle: String
+    var hasSwitch: Bool = false
+    var color: Color = .blue
+    @Binding var isOn: Bool
     
-    var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.title3)
-                .foregroundColor(color)
-            
-            Text(value)
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundColor(.primary)
-            
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
+    init(icon: String, title: String, subtitle: String, hasSwitch: Bool = false, color: Color = .blue, isOn: Binding<Bool> = .constant(true)) {
+        self.icon = icon
+        self.title = title
+        self.subtitle = subtitle
+        self.hasSwitch = hasSwitch
+        self.color = color
+        self._isOn = isOn
     }
-}
-
-struct InfoRow: View {
-    let icon: String
-    let title: String
-    let value: String
     
     var body: some View {
         HStack {
             Image(systemName: icon)
-                .foregroundColor(.blue)
+                .foregroundColor(color)
                 .frame(width: 30)
             
-            Text(title)
-                .foregroundColor(.primary)
-            
-            Spacer()
-            
-            Text(value)
-                .foregroundColor(.secondary)
-        }
-        .padding()
-        .background(Color(.systemBackground))
-    }
-}
-
-struct ActionRow: View {
-    let title: String
-    let icon: String
-    let color: Color
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            HStack {
-                Image(systemName: icon)
-                    .foregroundColor(color)
-                    .frame(width: 30)
-                
+            VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .foregroundColor(.primary)
                 
-                Spacer()
-                
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            Spacer()
+            
+            if hasSwitch {
+                Toggle("", isOn: $isOn)
+                    .labelsHidden()
+            } else {
                 Image(systemName: "chevron.right")
                     .font(.caption)
                     .foregroundColor(.gray)
             }
-            .padding()
-            .background(Color(.systemBackground))
+        }
+        .padding()
+        .background(Color(.systemBackground))
+        .cornerRadius(10)
+        .padding(.horizontal)
+    }
+}
+
+
+// MARK: - Placeholder Views
+struct PaymentsView: View {
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            VStack {
+                Text("Управление платежами")
+                    .foregroundColor(.secondary)
+                Spacer()
+            }
+            .navigationTitle("Платежи")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Готово") {
+                        dismiss()
+                    }
+                }
+            }
         }
     }
 }
 
-// MARK: - Placeholder Views
 struct EditProfileView: View {
     @Environment(\.dismiss) private var dismiss
     

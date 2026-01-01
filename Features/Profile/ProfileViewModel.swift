@@ -1,7 +1,8 @@
-// Features/Profile/ProfileViewModel.swift
 import Foundation
 import Combine
 
+// Вариант 1: Сделать весь класс @MainActor
+@MainActor
 class ProfileViewModel: ObservableObject {
     @Published var user: User?
     @Published var isLoading = false
@@ -16,15 +17,16 @@ class ProfileViewModel: ObservableObject {
     }
     
     private func setupBindings() {
-        // Следим за изменением authState вместо currentUser
+        // Теперь весь код автоматически выполняется на главном акторе
         authService.$authState
             .receive(on: RunLoop.main)
             .sink { [weak self] authState in
+                guard let self = self else { return }
                 switch authState {
                 case .authenticated(let user), .guest(let user):
-                    self?.user = user
+                    self.user = user
                 case .unauthenticated, .loading:
-                    self?.user = nil
+                    self.user = nil
                 }
             }
             .store(in: &cancellables)
@@ -34,13 +36,14 @@ class ProfileViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         
-        // Здесь будет логика обновления профиля
+        // Имитация обновления профиля
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
             self?.isLoading = false
         }
     }
     
     func logout() {
+        // Можно вызывать напрямую, так как мы на @MainActor
         try? authService.signOut()
     }
 }
