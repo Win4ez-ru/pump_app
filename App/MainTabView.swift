@@ -55,8 +55,8 @@ struct MainTabView: View {
                 CareerView()
             }
             .tabItem {
-                Image(systemName: "chart.line.uptrend.xyaxis")
-                Text("Карьера")
+                Image(systemName: "figure.run")
+                Text("Спорт")
             }
             
             NavigationView {

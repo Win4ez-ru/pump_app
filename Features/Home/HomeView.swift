@@ -20,6 +20,12 @@ struct HomeView: View {
                 // Приветствие
                 greetingView
                 
+                
+                // Рекламный баннер (вместо кнопки "Подробнее о тренере")
+                PromoBannerView()
+                    .padding(.horizontal, 20)
+                    .padding(.top, -2)
+                
                 // Карточка следующей тренировки
                 if let workout = nextWorkout {
                     HomeNextWorkoutCard(
@@ -37,16 +43,13 @@ struct HomeView: View {
                 // Рекомендуемые тренеры
                 recommendedTrainersSection
                 
-                // Рекламный баннер (вместо кнопки "Подробнее о тренере")
-                PromoBannerView()
-                    .padding(.horizontal, 20)
-                    .padding(.top, 8)
                 
             }
             .padding(.vertical, 10)
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Главная")
+        .padding(.top, -15)
         .sheet(isPresented: $showingAdvancedSearch) {
             AdvancedSearchView(viewModel: viewModel)
         }
