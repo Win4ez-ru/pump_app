@@ -160,16 +160,16 @@ struct ProfileView: View {
                 .foregroundColor(.blue)
             
             VStack(spacing: 5) {
-                Text(user?.displayName ?? "Гость")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                
-                if let email = user?.email {
-                    Text(email)
-                        .font(.body)
-                        .foregroundColor(.secondary)
-                }
-            }
+                        Text(user?.displayName ?? "Гость")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                        
+                        if let email = user?.email {
+                            Text(email)
+                                .font(.body)
+                                .foregroundColor(.secondary)
+                        }
+                    }
             
             if authManager.hasSkippedLogin {
                 Text("Гостевой режим")

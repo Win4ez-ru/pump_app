@@ -1,53 +1,76 @@
 import SwiftUI
-import Combine
 
 struct SignUpView: View {
     @EnvironmentObject private var authService: AuthService
-    @StateObject private var viewModel: AuthenticationViewModel
+    @StateObject private var viewModel = AuthenticationViewModel()
     @Environment(\.dismiss) private var dismiss
     
-    init(authService: AuthService) {
-        _viewModel = StateObject(wrappedValue: AuthenticationViewModel(authService: authService))
+    @State private var fullName = ""
+    @State private var usernameAvailability: UsernameAvailability = .notChecked
+    
+    enum UsernameAvailability {
+        case notChecked, checking, available, taken
     }
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 25) {
-                    // Header
-                    headerView
+            Form {
+                Section(header: Text("Основная информация")) {
+                    TextField("Email", text: $viewModel.email)
+                        .autocapitalization(.none)
+                        .keyboardType(.emailAddress)
                     
-                    // Form
-                    formView
+                    TextField("Имя пользователя", text: $viewModel.username)
+                        .autocapitalization(.none)
+                        .onChange(of: viewModel.username) { _ in
+                            checkUsernameAvailability()
+                        }
                     
-                    // Sign Up Button - ИСПРАВЛЯЕМ
-                    PrimaryButton(
-                        title: "Зарегистрироваться",
-                        action: {
-                            Task {
-                                if await viewModel.signUp() {
-                                    dismiss()
-                                }
+                    // Индикатор доступности username
+                    if !viewModel.username.isEmpty {
+                        HStack {
+                            switch usernameAvailability {
+                            case .checking:
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                                Text("Проверка...")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            case .available:
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(.green)
+                                Text("Доступно")
+                                    .font(.caption)
+                                    .foregroundColor(.green)
+                            case .taken:
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundColor(.red)
+                                Text("Уже занято")
+                                    .font(.caption)
+                                    .foregroundColor(.red)
+                            case .notChecked:
+                                EmptyView()
                             }
-                        },
-                        isLoading: viewModel.isLoading,
-                        isDisabled: !viewModel.isSignUpFormValid,
-                        backgroundColor: .green
-                    )
-                    .padding(.horizontal)
+                        }
+                    }
                     
-                    // Error Message
-                    if !viewModel.errorMessage.isEmpty {
+                    TextField("Полное имя (необязательно)", text: $fullName)
+                }
+                
+                Section(header: Text("Безопасность")) {
+                    SecureField("Пароль", text: $viewModel.password)
+                    SecureField("Подтвердите пароль", text: $viewModel.confirmPassword)
+                }
+                
+                if !viewModel.errorMessage.isEmpty {
+                    Section {
                         Text(viewModel.errorMessage)
                             .foregroundColor(.red)
                             .font(.caption)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
                     }
-                    
-                    Spacer()
                 }
             }
+            .navigationTitle("Регистрация")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -55,51 +78,47 @@ struct SignUpView: View {
                         dismiss()
                     }
                 }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Зарегистрироваться") {
+                        Task {
+                            await signUp()
+                        }
+                    }
+                    .disabled(!viewModel.isSignUpFormValid || usernameAvailability == .taken)
+                }
             }
         }
     }
     
-    // MARK: - Components
-    private var headerView: some View {
-        VStack(spacing: 10) {
-            Image(systemName: "person.badge.plus")
-                .font(.system(size: 70))
-                .foregroundColor(.green)
-            
-            Text("Создать аккаунт")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-            
-            Text("Заполните данные для регистрации")
-                .font(.body)
-                .foregroundColor(.secondary)
+    private func checkUsernameAvailability() {
+        guard !viewModel.username.isEmpty else {
+            usernameAvailability = .notChecked
+            return
         }
-        .padding(.top, 30)
+        
+        usernameAvailability = .checking
+        
+        Task {
+            do {
+                let isAvailable = try await authService.isUsernameAvailable(viewModel.username)
+                usernameAvailability = isAvailable ? .available : .taken
+            } catch {
+                usernameAvailability = .notChecked
+            }
+        }
     }
     
-    private var formView: some View {
-        VStack(spacing: 18) {
-            // ЗАМЕНЯЕМ кастомные поля на стандартные
-            TextField("Имя пользователя", text: $viewModel.username)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-            
-            TextField("Email", text: $viewModel.email)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .keyboardType(.emailAddress)
-                .autocapitalization(.none)
-            
-            SecureField("Пароль", text: $viewModel.password)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-            
-            SecureField("Подтвердите пароль", text: $viewModel.confirmPassword)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
+    private func signUp() async {
+            do {
+                try await authService.signUp(
+                    email: viewModel.email,
+                    password: viewModel.password,
+                    username: viewModel.username,
+                    fullName: fullName.isEmpty ? nil : fullName
+                )
+                dismiss()
+            } catch {
+                viewModel.errorMessage = error.localizedDescription
+            }
         }
-        .padding(.horizontal)
-    }
-}
-
-struct SignUpView_Previews: PreviewProvider {
-    static var previews: some View {
-        SignUpView(authService: AuthService())
-    }
 }

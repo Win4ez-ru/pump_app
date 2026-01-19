@@ -28,7 +28,6 @@ struct CareerView: View {
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Моя карьера")
         .navigationBarTitleDisplayMode(.inline)
-        
     }
     
     // MARK: - Секция уровня
@@ -53,7 +52,7 @@ struct CareerView: View {
                         .font(.title)
                         .foregroundColor(.white)
                     
-                    Text("\(viewModel.stats.level)")
+                    Text("\(viewModel.stats.level)") // ← ИСПРАВЛЕНО: было viewModel.currentlevel
                         .font(.headline)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
@@ -78,7 +77,7 @@ struct CareerView: View {
                             
                             Spacer()
                             
-                            Text("\(Int(viewModel.experienceProgress * 100))%")
+                            Text("\(viewModel.stats.experience) XP")
                                 .font(.caption)
                                 .fontWeight(.semibold)
                         }
@@ -97,18 +96,18 @@ struct CareerView: View {
         }
     }
     
-    // MARK: - Селектор периода (цельная полоска с ползунком) - ИСПРАВЛЕН
+    // MARK: - Селектор периода
     
     private var periodSelector: some View {
         VStack(spacing: 0) {
-            // Полоска с текстами и кнопками - всё вместе
+            // Полоска с текстами и кнопками
             ZStack(alignment: .leading) {
-                // Фон полоски (почти прозрачный)
+                // Фон полоски
                 Capsule()
                     .fill(Color.gray.opacity(0.1))
                     .frame(height: 40)
                 
-                // Ползунок (не закрывает текст)
+                // Ползунок
                 GeometryReader { geometry in
                     let width = geometry.size.width / CGFloat(TimePeriod.allCases.count)
                     let index = CGFloat(TimePeriod.allCases.firstIndex(of: viewModel.selectedTimePeriod) ?? 0)
@@ -118,7 +117,6 @@ struct CareerView: View {
                         .frame(width: width, height: 40)
                         .padding(2)
                         .offset(x: width * index - 2)
-                        
                         .animation(.spring(response: 0.3), value: viewModel.selectedTimePeriod)
                 }
                 
@@ -136,24 +134,24 @@ struct CareerView: View {
                                 .foregroundColor(.primary)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 44)
-                                .contentShape(Rectangle()) // ← ВАЖНО: делает всю область кликабельной
+                                .contentShape(Rectangle())
                         }
-                        .buttonStyle(PlainButtonStyle()) // ← Отключаем стандартный стиль кнопки
+                        .buttonStyle(PlainButtonStyle())
                     }
                 }
             }
             .frame(height: 44)
             .padding(.horizontal, 4)
         }
-        .padding(.top, 12) // ← УМЕНЬШИЛ отступ сверху
+        .padding(.top, 12)
         .padding(.horizontal, 16)
-        .padding(.bottom, 10) // ← ДОБАВИЛ отступ снизу, чтобы был ближе к статистике
+        .padding(.bottom, 10)
     }
     
-    // MARK: - Статистика за период (часть той же карточки) - УМЕНЬШИЛ ОТСТУПЫ
+    // MARK: - Статистика за период
     
     private var periodStatsSection: some View {
-        VStack(alignment: .leading, spacing: 12) { // ← УМЕНЬШИЛ spacing с 16 до 12
+        VStack(alignment: .leading, spacing: 12) {
             // Заголовок статистики
             HStack {
                 Image(systemName: "chart.bar.fill")
@@ -165,7 +163,7 @@ struct CareerView: View {
                 
                 Spacer()
             }
-            .padding(.top, 6) // ← УМЕНЬШИЛ отступ сверху
+            .padding(.top, 6)
             .padding(.horizontal, 16)
             
             // Сетка статистики
@@ -209,7 +207,7 @@ struct CareerView: View {
             .padding(.bottom, 8)
             
             // Дополнительная статистика
-            VStack(spacing: 10) { // ← УМЕНЬШИЛ spacing
+            VStack(spacing: 10) {
                 HStack {
                     Label("Средняя тренировка", systemImage: "timer")
                         .font(.subheadline)
@@ -230,11 +228,11 @@ struct CareerView: View {
                 }
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 10) // ← УМЕНЬШИЛ вертикальные отступы
+            .padding(.vertical, 10)
             .background(Color.gray.opacity(0.05))
             .cornerRadius(12)
             .padding(.horizontal, 16)
-            .padding(.bottom, 12) // ← УМЕНЬШИЛ отступ снизу
+            .padding(.bottom, 12)
         }
     }
     
@@ -278,13 +276,8 @@ struct CareerView: View {
                         
                         // Аватар
                         Circle()
-                            .fill(user.avatarColor)
+                            .fill(colorFromString(user.avatarColorName))
                             .frame(width: 40, height: 40)
-                            .overlay(
-                                Text(String(user.name.prefix(1)))
-                                    .font(.headline)
-                                    .foregroundColor(.white)
-                            )
                         
                         // Имя и статистика
                         VStack(alignment: .leading, spacing: 2) {
@@ -376,6 +369,19 @@ struct CareerView: View {
         default: return .blue
         }
     }
+    
+    private func colorFromString(_ colorName: String) -> Color {
+        switch colorName {
+        case "blue": return .blue
+        case "pink": return .pink
+        case "green": return .green
+        case "orange": return .orange
+        case "purple": return .purple
+        case "red": return .red
+        case "yellow": return .yellow
+        default: return .gray
+        }
+    }
 }
 
 // MARK: - Улучшенный StatCard
@@ -425,7 +431,6 @@ struct CareerStatCard: View {
         )
     }
 }
-
 
 struct CareerView_Previews: PreviewProvider {
     static var previews: some View {

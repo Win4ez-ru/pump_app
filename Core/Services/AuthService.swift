@@ -3,6 +3,7 @@ import Combine
 import FirebaseAuth
 import FirebaseFirestore
 
+// Расширение для сравнения AuthState должно быть БЕЗ "AuthService." префикса
 extension AuthService.AuthState: Equatable {
     static func == (lhs: AuthService.AuthState, rhs: AuthService.AuthState) -> Bool {
         switch (lhs, rhs) {
@@ -65,6 +66,14 @@ class AuthService: ObservableObject {
         }
     }
     
+    func isUsernameAvailable(_ username: String) async throws -> Bool {
+            let snapshot = try await db.collection("users")
+                .whereField("username", isEqualTo: username.lowercased())
+                .getDocuments()
+            
+            return snapshot.documents.isEmpty
+        }
+    
     // MARK: - Initialization
     init() {
         checkAuthenticationStatus()
@@ -91,18 +100,50 @@ class AuthService: ObservableObject {
         setupGuestUser()
     }
     
-    func signUp(email: String, password: String, username: String) async throws {
+    // НОВЫЙ МЕТОД ДЛЯ GOOGLE SIGN-IN ← ДОБАВЛЯЕМ
+    func signInWithGoogle(idToken: String, accessToken: String) async throws {
         isLoading = true
         defer { isLoading = false }
         
-        let authResult = try await auth.createUser(withEmail: email, password: password)
+        // Создаем учетные данные Firebase из токенов Google
+        let credential = GoogleAuthProvider.credential(
+            withIDToken: idToken,
+            accessToken: accessToken
+        )
         
+        // Входим в Firebase
+        let authResult = try await auth.signIn(with: credential)
+        hasSkippedLogin = false
+        
+        // Получаем данные пользователя
+        await fetchUserData(userId: authResult.user.uid)
+    }
+    
+    func signUp(email: String, password: String, username: String, fullName: String? = nil) async throws {
+        isLoading = true
+        defer { isLoading = false }
+            
+        // 1. Проверяем уникальность username
+        guard try await isUsernameAvailable(username) else {
+            throw NSError(
+                domain: "AuthService",
+                code: 409,
+                userInfo: [NSLocalizedDescriptionKey: "Имя пользователя '\(username)' уже занято"]
+            )
+        }
+            
+        // 2. Создаем пользователя в Firebase Auth
+        let authResult = try await auth.createUser(withEmail: email, password: password)
+            
+        // 3. Создаем объект User
         let newUser = User(
             id: authResult.user.uid,
             email: email,
-            username: username
+            username: username.lowercased(), // Сохраняем в нижнемрегистре
+            fullName: fullName
         )
         
+        // 4. Сохраняем в Firestore
         try await saveUserToFirestore(user: newUser)
         authState = .authenticated(newUser)
         hasSkippedLogin = false
@@ -141,10 +182,12 @@ class AuthService: ObservableObject {
         let userData: [String: Any] = [
             "id": user.id,
             "email": user.email,
-            "username": user.username ?? "",
+            "username": user.username, // ✅ Теперь обязательное поле
+            "fullName": user.fullName ?? "",
+            "profileImageUrl": user.profileImageUrl ?? "",
             "createdAt": Timestamp(date: user.createdAt)
         ]
-        
+            
         try await db.collection("users").document(user.id).setData(userData)
     }
     
@@ -153,38 +196,70 @@ class AuthService: ObservableObject {
             let document = try await db.collection("users").document(userId).getDocument()
             
             if let data = document.data(), document.exists {
-                let username = data["username"] as? String
-                let email = data["email"] as? String ?? ""
-                let createdAt = (data["createdAt"] as? Timestamp)?.dateValue() ?? Date()
+                // ✅ ОБЯЗАТЕЛЬНО распаковываем username
+                guard let username = data["username"] as? String else {
+                    // Если username нет в данных, используем email или дефолтное значение
+                    let email = data["email"] as? String ?? ""
+                    let fallbackUsername = email.components(separatedBy: "@").first ?? "user_\(userId.prefix(6))"
+                    
+                    let user = User(
+                        id: userId,
+                        email: email,
+                        username: fallbackUsername, // ✅ Обязательное поле
+                        fullName: data["fullName"] as? String,
+                        profileImageUrl: data["profileImageUrl"] as? String,
+                        createdAt: (data["createdAt"] as? Timestamp)?.dateValue() ?? Date()
+                    )
+                    
+                    authState = .authenticated(user)
+                    return
+                }
                 
+                // ✅ Все поля есть - создаем пользователя
                 let user = User(
                     id: userId,
-                    email: email,
-                    username: username,
-                    createdAt: createdAt
+                    email: data["email"] as? String ?? "",
+                    username: username, // ✅ Теперь не опциональное
+                    fullName: data["fullName"] as? String,
+                    profileImageUrl: data["profileImageUrl"] as? String,
+                    createdAt: (data["createdAt"] as? Timestamp)?.dateValue() ?? Date()
                 )
                 
                 authState = .authenticated(user)
             } else {
                 // Если данные пользователя не найдены, создаем базовую запись
                 if let firebaseUser = auth.currentUser {
+                    // ✅ Создаем username из email или displayName
+                    let email = firebaseUser.email ?? ""
+                    let username = firebaseUser.displayName ??
+                        email.components(separatedBy: "@").first ??
+                        "user_\(userId.prefix(6))"
+                    
                     let newUser = User(
                         id: userId,
-                        email: firebaseUser.email ?? "",
-                        username: firebaseUser.displayName
+                        email: email,
+                        username: username.lowercased(), // ✅ Обязательное поле
+                        fullName: firebaseUser.displayName
                     )
+                    
                     try? await saveUserToFirestore(user: newUser)
                     authState = .authenticated(newUser)
                 }
             }
         } catch {
             print("Error fetching user data: \(error)")
-            // В случае ошибки все равно считаем пользователя аутентифицированным
+            // В случае ошибки создаем временного пользователя
             if let firebaseUser = auth.currentUser {
+                let email = firebaseUser.email ?? ""
+                let username = firebaseUser.displayName ??
+                    email.components(separatedBy: "@").first ??
+                    "user_\(userId.prefix(6))"
+                
                 let user = User(
                     id: userId,
-                    email: firebaseUser.email ?? "",
-                    username: firebaseUser.displayName
+                    email: email,
+                    username: username.lowercased(), // ✅ Обязательное поле
+                    fullName: firebaseUser.displayName
                 )
                 authState = .authenticated(user)
             }

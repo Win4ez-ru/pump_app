@@ -44,11 +44,10 @@ struct MainTabView: View {
             }
             
             NavigationView {
-                ChatListView()
+                ChatsListView()
             }
             .tabItem {
-                Image(systemName: "message.fill")
-                Text("Чаты")
+                Label("Чаты", systemImage: "message.fill")
             }
             
             NavigationView {

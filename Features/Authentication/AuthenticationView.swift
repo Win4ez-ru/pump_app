@@ -1,4 +1,3 @@
-// Features/Authentication/AuthenticationView.swift
 import SwiftUI
 
 struct AuthenticationView: View {
@@ -11,7 +10,7 @@ struct AuthenticationView: View {
                 MainTabView()
                     .environmentObject(authService)
             case .unauthenticated:
-                LoginView(authServiceParam: authService)
+                LoginView() // ← Убираем параметр
                     .environmentObject(authService)
             case .loading:
                 LoadingView()

@@ -1,8 +1,10 @@
+// pump_appApp.swift
 import SwiftUI
 import FirebaseCore
+import GoogleSignIn // [!code focus]
 
 @main
-struct PumpApp: App {  // ← ИЗМЕНИТЕ НА PumpApp (с большой P)
+struct pump_appApp: App {
     @StateObject private var authService = AuthService()
     
     init() {
@@ -11,8 +13,12 @@ struct PumpApp: App {  // ← ИЗМЕНИТЕ НА PumpApp (с большой P
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            AuthenticationView()
                 .environmentObject(authService)
+                .onOpenURL { url in // [!code focus]
+                    // Обработка URL, полученных от Google Sign-In[citation:8]
+                    GIDSignIn.sharedInstance.handle(url) // [!code focus]
+                } // [!code focus]
         }
     }
 }

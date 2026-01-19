@@ -3,20 +3,22 @@ import Foundation
 struct User: Identifiable, Codable, Equatable {
     let id: String
     let email: String
-    let username: String?
+    let username: String
+    let fullName: String?
     let profileImageUrl: String?
     let createdAt: Date
     
-    init(id: String, email: String, username: String? = nil, profileImageUrl: String? = nil, createdAt: Date = Date()) {
+    init(id: String, email: String, username: String, fullName: String? = nil, profileImageUrl: String? = nil, createdAt: Date = Date()) {
         self.id = id
         self.email = email
         self.username = username
+        self.fullName = fullName
         self.profileImageUrl = profileImageUrl
         self.createdAt = createdAt
     }
     
     var displayName: String {
-        username ?? email.components(separatedBy: "@").first ?? "Пользователь"
+        fullName ?? username
     }
     
     static let guest = User(

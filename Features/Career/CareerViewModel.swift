@@ -1,31 +1,91 @@
 import Foundation
 import SwiftUI
+import Combine
 
-// TimePeriod выносим за пределы класса
+// MARK: - Модели данных (упрощенные для ObservableObject)
 enum TimePeriod: String, CaseIterable, Identifiable {
     case day = "День"
     case week = "Неделя"
     case month = "Месяц"
     case year = "Год"
     
-    var id: String { self.rawValue }
+    var id: String { rawValue }
 }
 
+struct WeeklyProgress: Identifiable {
+    let id = UUID()
+    let day: String
+    let completedTrainings: Int
+    let targetTrainings: Int
+}
+
+struct Achievement: Identifiable {
+    let id = UUID()
+    let title: String
+    let description: String
+    let icon: String
+    let colorName: String // ← ИЗМЕНИЛИ на String вместо Color
+    let isUnlocked: Bool
+    let progress: Double
+}
+
+struct CareerStats {
+    let totalTrainings: Int
+    let totalHours: Int
+    let currentStreak: Int
+    let bestStreak: Int
+    let caloriesTotal: Int
+    let consistency: Double
+    var level: Int {
+            totalTrainings / 10 + 1
+        }
+    var experience: Int {
+            totalTrainings * 100
+        }
+}
+
+struct PeriodStats {
+    let trainings: Int
+    let hours: Double
+    let calories: Int
+    let intensity: Double
+    let avgSessionDuration: Int
+}
+
+struct TopUser: Identifiable {
+    let id: String
+    let name: String
+    let trainings: Int
+    let hours: Int
+    let avatarColorName: String // ← ИЗМЕНИЛИ на String вместо Color
+    let isCurrentUser: Bool
+}
+
+// MARK: - ViewModel
 class CareerViewModel: ObservableObject {
-    @Published var selectedTimePeriod: TimePeriod = .month  // Убрали CareerViewModel.
+    @Published var selectedTimePeriod: TimePeriod = .month
     @Published var weeklyProgress: [WeeklyProgress] = []
     @Published var achievements: [Achievement] = []
     @Published var stats: CareerStats
     
-    // Добавляем вычисляемое свойство для прогресса опыта
-    var experienceProgress: Double {
-        let experience = Double(stats.totalTrainings)
-        let levelExperience = Double(stats.level * 10)
-        let progress = experience.truncatingRemainder(dividingBy: 10) / 10.0
-        return progress
+    init() {
+        self.stats = CareerStats(
+            totalTrainings: 47,
+            totalHours: 82,
+            currentStreak: 7,
+            bestStreak: 14,
+            caloriesTotal: 12450,
+            consistency: 78.5
+        )
+        loadSampleData()
     }
     
-    // Добавляем статистику для периодов
+    // Вычисляемые свойства
+    var experienceProgress: Double {
+        let experience = Double(stats.totalTrainings)
+        return experience.truncatingRemainder(dividingBy: 10) / 10.0
+    }
+    
     var currentPeriodStats: PeriodStats {
         switch selectedTimePeriod {
         case .day:
@@ -39,27 +99,14 @@ class CareerViewModel: ObservableObject {
         }
     }
     
-    // Добавляем топ пользователей
     var topUsers: [TopUser] {
-        return [
-            TopUser(id: "1", name: "Алексей", trainings: 32, hours: 56, avatarColor: .blue, isCurrentUser: false),
-            TopUser(id: "2", name: "Мария", trainings: 28, hours: 49, avatarColor: .pink, isCurrentUser: false),
-            TopUser(id: "3", name: "Иван", trainings: 25, hours: 45, avatarColor: .green, isCurrentUser: false),
-            TopUser(id: "4", name: "Вы", trainings: 22, hours: 38, avatarColor: .orange, isCurrentUser: true),
-            TopUser(id: "5", name: "Дмитрий", trainings: 20, hours: 35, avatarColor: .purple, isCurrentUser: false)
+        [
+            TopUser(id: "1", name: "Алексей", trainings: 32, hours: 56, avatarColorName: "blue", isCurrentUser: false),
+            TopUser(id: "2", name: "Мария", trainings: 28, hours: 49, avatarColorName: "pink", isCurrentUser: false),
+            TopUser(id: "3", name: "Иван", trainings: 25, hours: 45, avatarColorName: "green", isCurrentUser: false),
+            TopUser(id: "4", name: "Вы", trainings: 22, hours: 38, avatarColorName: "orange", isCurrentUser: true),
+            TopUser(id: "5", name: "Дмитрий", trainings: 20, hours: 35, avatarColorName: "purple", isCurrentUser: false)
         ]
-    }
-    
-    init() {
-        self.stats = CareerStats(
-            totalTrainings: 47,
-            totalHours: 82,
-            currentStreak: 7,
-            bestStreak: 14,
-            caloriesTotal: 12450,
-            consistency: 78.5
-        )
-        loadSampleData()
     }
     
     private func loadSampleData() {
@@ -74,101 +121,14 @@ class CareerViewModel: ObservableObject {
         ]
         
         achievements = [
-            Achievement(
-                title: "Новичок",
-                description: "Первая тренировка",
-                icon: "trophy.fill",
-                color: .orange,
-                isUnlocked: true,
-                progress: 1.0
-            ),
-            Achievement(
-                title: "Стальной дух",
-                description: "7 дней подряд",
-                icon: "flame.fill",
-                color: .red,
-                isUnlocked: true,
-                progress: 1.0
-            ),
-            Achievement(
-                title: "Мастер",
-                description: "10 часов тренировок",
-                icon: "clock.fill",
-                color: .blue,
-                isUnlocked: false,
-                progress: 0.82
-            ),
-            Achievement(
-                title: "Легенда",
-                description: "50 тренировок",
-                icon: "crown.fill",
-                color: .yellow,
-                isUnlocked: false,
-                progress: 0.94
-            )
+            Achievement(title: "Новичок", description: "Первая тренировка", icon: "trophy.fill", colorName: "orange", isUnlocked: true, progress: 1.0),
+            Achievement(title: "Стальной дух", description: "7 дней подряд", icon: "flame.fill", colorName: "red", isUnlocked: true, progress: 1.0),
+            Achievement(title: "Мастер", description: "10 часов тренировок", icon: "clock.fill", colorName: "blue", isUnlocked: false, progress: 0.82),
+            Achievement(title: "Легенда", description: "50 тренировок", icon: "crown.fill", colorName: "yellow", isUnlocked: false, progress: 0.94)
         ]
     }
     
     func refreshData() {
         loadSampleData()
     }
-}
-
-// MARK: - Модели данных
-
-struct WeeklyProgress: Identifiable {
-    let id = UUID()
-    let day: String
-    let completedTrainings: Int
-    let targetTrainings: Int
-    
-    var progress: Double {
-        Double(completedTrainings) / Double(targetTrainings)
-    }
-}
-
-struct Achievement: Identifiable {
-    let id = UUID()
-    let title: String
-    let description: String
-    let icon: String
-    let color: Color
-    let isUnlocked: Bool
-    let progress: Double
-}
-
-struct CareerStats {
-    let totalTrainings: Int
-    let totalHours: Int
-    let currentStreak: Int
-    let bestStreak: Int
-    let caloriesTotal: Int
-    let consistency: Double
-    
-    var level: Int {
-        totalTrainings / 10 + 1
-    }
-    
-    var experience: Int {
-        totalTrainings * 100
-    }
-}
-
-// Новая модель для статистики за период
-struct PeriodStats {
-    let trainings: Int
-    let hours: Double
-    let calories: Int
-    let intensity: Double
-    let avgSessionDuration: Int
-}
-
-// Новая модель для топ пользователей
-struct TopUser: Identifiable {
-    let id: String
-    let name: String
-    let trainings: Int
-    let hours: Int
-    let avatarColor: Color
-    let isCurrentUser: Bool
 }

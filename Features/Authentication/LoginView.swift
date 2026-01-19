@@ -1,15 +1,16 @@
 import SwiftUI
 import Combine
+import GoogleSignInSwift
 
 struct LoginView: View {
-    @EnvironmentObject private var authService: AuthService
+    @EnvironmentObject private var authService: AuthService // ← Убираем параметр из init
     @StateObject private var viewModel: AuthenticationViewModel
     
     @State private var isShowingSignUp = false
     
-    // ПЕРЕИМЕНУЙ ПАРАМЕТР
-    init(authServiceParam: AuthService) {
-        _viewModel = StateObject(wrappedValue: AuthenticationViewModel(authService: authServiceParam))
+    // УБИРАЕМ параметр из init
+    init() {
+        _viewModel = StateObject(wrappedValue: AuthenticationViewModel())
     }
     
     var body: some View {
@@ -27,7 +28,7 @@ struct LoginView: View {
                         title: "Войти",
                         action: {
                             Task {
-                                _ = await viewModel.signIn()
+                                _ = await viewModel.signIn(authService: authService) // ← Передаем authService в метод
                             }
                         },
                         isLoading: viewModel.isLoading,
@@ -43,6 +44,16 @@ struct LoginView: View {
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
                     }
+                    
+                    // ДЕЛИТЕЛЬ МЕЖДУ ОСНОВНОЙ ФОРМОЙ И GOOGLE
+                    Text("Или войдите через")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                
+                    // НОВАЯ КНОПКА GOOGLE SIGN-IN ← ДОБАВЬТЕ ЗДЕСЬ
+                    GoogleSignInButtonView()
+                        .frame(height: 44) // Стандартная высота
+                        .padding(.horizontal)
                     
                     // Divider
                     dividerView
@@ -61,7 +72,8 @@ struct LoginView: View {
             }
             .navigationBarHidden(true)
             .sheet(isPresented: $isShowingSignUp) {
-                SignUpView(authService: authService)
+                SignUpView() // ← Тоже убираем параметр
+                    .environmentObject(authService) // ← Передаем через environmentObject
             }
         }
     }
@@ -134,6 +146,7 @@ struct LoginView: View {
 
 struct LoginView_Previews: PreviewProvider {
     static var previews: some View {
-        LoginView(authServiceParam: AuthService())
+        LoginView()
+            .environmentObject(AuthService())
     }
 }
