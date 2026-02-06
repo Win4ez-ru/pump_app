@@ -2,46 +2,48 @@ import SwiftUI
 
 struct MainTabView: View {
     @EnvironmentObject private var authService: AuthService
-    @StateObject private var trainingViewModel: TrainingViewModel
+    @StateObject private var trainingViewModel = TrainingViewModel()
     @StateObject private var profileViewModel: ProfileViewModel
-    
-    // ДОБАВЬТЕ эту переменную
-    @StateObject private var trainingService: TrainingService
+    @State private var selectedTab = 0
+    @State private var showingTrainingDetail = false
+    @State private var selectedTraining: Training?
     
     init() {
-        // СОЗДАЕМ trainingService как StateObject
-        let trainingService = TrainingService()
-        _trainingService = StateObject(wrappedValue: trainingService)
-        
-        // Передаем его в TrainingViewModel
-        _trainingViewModel = StateObject(wrappedValue: TrainingViewModel(trainingService: trainingService))
-        
-        // Создаем authService для ProfileViewModel
         let authService = AuthService()
         _profileViewModel = StateObject(wrappedValue: ProfileViewModel(authService: authService))
     }
     
     var body: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             NavigationView {
-                HomeView()
+                HomeView(selectedTab: $selectedTab)
                     .environmentObject(trainingViewModel)
             }
             .tabItem {
                 Image(systemName: "house.fill")
                 Text("Главная")
             }
+            .tag(0)
             
             NavigationView {
                 TrainingCalendarView()
-                    // ИСПОЛЬЗУЙТЕ ОДИНАКОВЫЕ ЭКЗЕМПЛЯРЫ:
-                    .environmentObject(trainingService)        // ← тот же trainingService
-                    .environmentObject(trainingViewModel)      // ← тот же trainingViewModel
+                    .environmentObject(trainingViewModel)
+                    .onAppear {
+                        // Проверяем сохраненную тренировку при каждом появлении календаря
+                        if let trainingData = UserDefaults.standard.data(forKey: "selectedTraining"),
+                           let training = try? JSONDecoder().decode(Training.self, from: trainingData) {
+                            selectedTraining = training
+                            showingTrainingDetail = true
+                            // Очищаем сохраненные данные
+                            UserDefaults.standard.removeObject(forKey: "selectedTraining")
+                        }
+                    }
             }
             .tabItem {
                 Image(systemName: "calendar")
                 Text("Календарь")
             }
+            .tag(1)
             
             NavigationView {
                 ChatsListView()
@@ -69,6 +71,17 @@ struct MainTabView: View {
             
         }
         .accentColor(.blue)
+        .sheet(isPresented: $showingTrainingDetail) {
+            if let training = selectedTraining {
+                TrainingDetailView(training: training)
+                    .environmentObject(trainingViewModel) // Добавляем environmentObject
+            }
+        }
+        .onAppear {
+            // Очищаем все сохраненные данные при запуске приложения
+            UserDefaults.standard.removeObject(forKey: "selectedCalendarDate")
+            UserDefaults.standard.removeObject(forKey: "showTrainingDetails")
+        }
     }
 }
 

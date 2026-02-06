@@ -2,87 +2,50 @@
 import SwiftUI
 
 struct NextWorkoutCard: View {
-    var nextWorkout: Training? = nil
-    var onTap: (() -> Void)? = nil
-    
+    let workout: Training
+    let onTap: () -> Void
+        
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        Button(action: onTap) {
             HStack {
-                Image(systemName: "clock.fill")
+                Image(systemName: "calendar.badge.clock")
+                    .font(.title2)
                     .foregroundColor(.blue)
-                    .font(.caption)
                 
-                Text("Следующая тренировка")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(.secondary)
-                
-                Spacer()
-                
-                if nextWorkout != nil {
-                    Text("Скоро")
-                        .font(.caption2)
-                        .fontWeight(.medium)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.blue.opacity(0.1))
-                        .foregroundColor(.blue)
-                        .cornerRadius(6)
-                }
-            }
-            
-            if let workout = nextWorkout {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(workout.title)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Следующая тренировка")
                         .font(.headline)
-                        .foregroundColor(.primary)
                     
-                    HStack {
-                        Image(systemName: "calendar")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        Text(workout.date.toString(format: "dd MMMM 'в' HH:mm"))
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    HStack {
-                        TrainingTypeBadge(type: workout.type)
-                        
-                        Spacer()
-                        
-                        Text("\(workout.exercises.count) упражнений")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
-            } else {
-                VStack(spacing: 12) {
-                    Image(systemName: "dumbbell.fill")
-                        .font(.title2)
-                        .foregroundColor(.gray.opacity(0.5))
-                    
-                    Text("Тренировок не запланировано")
+                    Text(workout.title)
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     
-                    SecondaryButton(title: "Запланировать", action: {
-                        onTap?()
-                    })
+                    HStack {
+                        Image(systemName: "clock")
+                            .font(.caption)
+                        
+                        Text(formatDate(workout.date))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.gray)
             }
+            .padding()
+            .background(Color(.systemBackground))
+            .cornerRadius(16)
         }
-        .padding(16)
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
-        .padding(.horizontal, 20)
-        .onTapGesture {
-            onTap?()
-        }
+        .buttonStyle(PlainButtonStyle())
+    }
+        
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd.MM, HH:mm"
+        return formatter.string(from: date)
     }
 }
 
@@ -130,20 +93,14 @@ struct NextWorkoutCard_Previews: PreviewProvider {
     static var previews: some View {
         VStack(spacing: 20) {
             NextWorkoutCard(
-                nextWorkout: Training(
+                workout: Training(
                     id: "1",
                     title: "Силовая тренировка",
                     date: Date().addingTimeInterval(3600),
-                    type: .strength,
-                    exercises: [
-                        Exercise(name: "Приседания", sets: 4, reps: 10, weight: 100),
-                        Exercise(name: "Жим лежа", sets: 4, reps: 8, weight: 80)
-                    ]
+                    type: .strength
                 ),
-                onTap: {}
+                onTap: { print("Нажато") }
             )
-            
-            NextWorkoutCard(onTap: {})
         }
         .padding()
     }

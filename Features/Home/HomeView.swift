@@ -1,73 +1,79 @@
-// Features/Home/HomeView.swift
 import SwiftUI
 
 struct HomeView: View {
     @EnvironmentObject private var authService: AuthService
     @EnvironmentObject private var trainingViewModel: TrainingViewModel
+    
     @StateObject private var viewModel = HomeViewModel()
+    
+    @Binding var selectedTab: Int
     
     @State private var showingAdvancedSearch = false
     @State private var showingTrainerDetail: Trainer?
+    @State private var navigateToCalendar = false
     
     var nextWorkout: Training? {
-        let futureTrainings = trainingViewModel.trainings.filter { $0.date > Date() }
-        return futureTrainings.sorted { $0.date < $1.date }.first
+        trainingViewModel.getNextTraining()
     }
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                // Приветствие
-                greetingView
-                
-                
-                // Рекламный баннер (вместо кнопки "Подробнее о тренере")
-                PromoBannerView()
-                    .padding(.horizontal, 20)
-                    .padding(.top, -2)
-                
-                // Карточка следующей тренировки
-                if let workout = nextWorkout {
-                    HomeNextWorkoutCard(
-                        workout: workout,
-                        onTap: {
-                            // Навигация к деталям тренировки
-                            print("Переход к тренировке")
+        NavigationView { // <-- Добавляем NavigationView если его нет
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Приветствие
+                    greetingView
+                    
+                    // Рекламный баннер
+                    PromoBannerView()
+                        .padding(.horizontal, 20)
+                        .padding(.top, -2)
+                    
+                    // Карточка следующей тренировки
+                    if let workout = nextWorkout {
+                        Button(action: {
+                            // Сохраняем тренировку
+                            if let encoded = try? JSONEncoder().encode(workout) {
+                                UserDefaults.standard.set(encoded, forKey: "selectedTraining")
+                            }
+                            // Переключаемся на вкладку календаря
+                            selectedTab = 1
+                        }) {
+                            HomeNextWorkoutCard(workout: workout)
+                                .contentShape(Rectangle()) // ⚠️ Это важно!
                         }
-                    )
+                        .buttonStyle(PlainButtonStyle())
+                        .padding(.horizontal)
+                    }
+                    
+                    // Блок поиска тренера
+                    trainerSearchCard
+                    
+                    // Рекомендуемые тренеры
+                    recommendedTrainersSection
                 }
-                
-                // Блок поиска тренера
-                trainerSearchCard
-                
-                // Рекомендуемые тренеры
-                recommendedTrainersSection
-                
-                
+                .padding(.vertical, 10)
             }
-            .padding(.vertical, 10)
-        }
-        .background(Color(.systemGroupedBackground))
-        .navigationTitle("Главная")
-        .padding(.top, -15)
-        .sheet(isPresented: $showingAdvancedSearch) {
-            AdvancedSearchView(viewModel: viewModel)
-        }
-        .sheet(item: $showingTrainerDetail) { trainer in
-            TrainerDetailView(trainer: trainer)
-        }
-        .onAppear {
-            trainingViewModel.loadTrainings()
-            viewModel.startAutoScroll()
-        }
-        .onDisappear {
-            viewModel.stopAutoScroll()
-        }
-        .refreshable {
-            viewModel.loadData()
-            trainingViewModel.loadTrainings()
-        }
-    }
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle("Главная")
+            .navigationBarTitleDisplayMode(.inline)
+            .sheet(isPresented: $showingAdvancedSearch) {
+                AdvancedSearchView(viewModel: viewModel)
+            }
+            .sheet(item: $showingTrainerDetail) { trainer in
+                TrainerDetailView(trainer: trainer)
+            }
+            .onAppear {
+                trainingViewModel.loadTrainings()
+                viewModel.startAutoScroll()
+            }
+            .onDisappear {
+                viewModel.stopAutoScroll()
+            }
+            .refreshable {
+                viewModel.loadData()
+                trainingViewModel.loadTrainings()
+            }
+        }}
     
     // MARK: - Приветствие
     
@@ -406,44 +412,39 @@ struct HomeView: View {
 
 struct HomeNextWorkoutCard: View {
     let workout: Training
-    let onTap: () -> Void
     
     var body: some View {
-        Button(action: onTap) {
-            HStack {
-                Image(systemName: "calendar.badge.clock")
-                    .font(.title2)
-                    .foregroundColor(.blue)
+        HStack {
+            Image(systemName: "calendar.badge.clock")
+                .font(.title2)
+                .foregroundColor(.blue)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Следующая тренировка")
+                    .font(.headline)
                 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Следующая тренировка")
-                        .font(.headline)
+                Text(workout.title)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                
+                HStack {
+                    Image(systemName: "clock")
+                        .font(.caption)
                     
-                    Text(workout.title)
-                        .font(.subheadline)
+                    Text(formatDate(workout.date))
+                        .font(.caption)
                         .foregroundColor(.secondary)
-                    
-                    HStack {
-                        Image(systemName: "clock")
-                            .font(.caption)
-                        
-                        Text(formatDate(workout.date))
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
                 }
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .foregroundColor(.gray)
             }
-            .padding()
-            .background(Color(.systemBackground))
-            .cornerRadius(16)
+            
+            Spacer()
+            
+            Image(systemName: "chevron.right")
+                .foregroundColor(.gray)
         }
-        .buttonStyle(PlainButtonStyle())
-        .padding(.horizontal)
+        .padding()
+        .background(Color(.systemBackground))
+        .cornerRadius(16)
     }
     
     private func formatDate(_ date: Date) -> String {
@@ -695,9 +696,9 @@ struct DetailRow: View {
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            HomeView()
+            HomeView(selectedTab: .constant(0)) // ⚠️ Добавить параметр
                 .environmentObject(AuthService())
-                .environmentObject(TrainingViewModel(trainingService: TrainingService()))
+                .environmentObject(TrainingViewModel())
         }
     }
 }

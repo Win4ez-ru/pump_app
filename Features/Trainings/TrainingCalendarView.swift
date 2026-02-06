@@ -1,413 +1,346 @@
+// Features/Trainings/TrainingCalendarView.swift
 import SwiftUI
 
 struct TrainingCalendarView: View {
-    @EnvironmentObject private var trainingManager: TrainingService
     @EnvironmentObject private var viewModel: TrainingViewModel
     @State private var selectedDate = Date()
-    @State private var currentMonth = Date()
-    @State private var showingEditView = false
-    @State private var editingTraining: Training?
-    @Environment(\.dismiss) private var dismiss
+    @State private var showingNewTraining = false
+    @State private var selectedTraining: Training?
+    @State private var showingEditTraining = false
     
-    private let daysOfWeek = ["ВС", "ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ"]
     private let calendar = Calendar.current
-    
-    private var trainingsForSelectedDate: [Training] {
-        trainingManager.getTrainings(for: selectedDate)
-    }
     
     var body: some View {
         VStack(spacing: 0) {
-            // Drag indicator - УБИРАЕМ НЕСУЩЕСТВУЮЩИЙ КОМПОНЕНТ
-            // DragIndicator(onTap: { dismiss() })
+            // Календарь
+            CalendarHeader(selectedDate: $selectedDate)
             
-            // Header with month navigation
-            headerView
-            
-            // Days of week
-            daysOfWeekView
-            
-            // Calendar grid
-            calendarGridView
-            
-            // Training details for selected date
-            trainingDetailsView
-        }
-        .background(Color(.systemGroupedBackground))
-        .navigationBarHidden(true)
-        .sheet(isPresented: $showingEditView) {
-            NavigationView {
-                // ИСПРАВЛЯЕМ ВЫЗОВ
-                TrainingEditView(
-                    viewModel: viewModel,
-                    training: editingTraining ?? createNewTraining(for: selectedDate)
-                )
-            }
-        }
-    }
-}
-
-// MARK: - Components
-extension TrainingCalendarView {
-    private var headerView: some View {
-        HStack {
-            Button(action: previousMonth) {
-                Image(systemName: "chevron.left")
-                    .font(.headline)
-                    .foregroundColor(.blue)
-                    .frame(width: 44, height: 44)
-            }
-            
-            Spacer()
-            
-            VStack(spacing: 2) {
-                Text(monthYearString(from: currentMonth))
-                    .font(.system(.title3, design: .rounded))
-                    .fontWeight(.semibold)
-                    .foregroundColor(.primary)
-                
-                if isToday(selectedDate) {
-                    Text("Сегодня")
-                        .font(.system(.caption, design: .rounded))
-                        .foregroundColor(.blue)
-                }
-            }
-            
-            Spacer()
-            
-            Button(action: nextMonth) {
-                Image(systemName: "chevron.right")
-                    .font(.headline)
-                    .foregroundColor(.blue)
-                    .frame(width: 44, height: 44)
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(Color(.systemBackground))
-    }
-    
-    private var daysOfWeekView: some View {
-        HStack(spacing: 0) {
-            ForEach(daysOfWeek, id: \.self) { day in
-                Text(day)
-                    .font(.system(.caption, design: .rounded))
-                    .fontWeight(.medium)
-                    .foregroundColor(.secondary)
-                    .frame(maxWidth: .infinity)
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(Color(.systemBackground))
-    }
-    
-    private var calendarGridView: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 8) {
-            ForEach(daysInMonth(), id: \.self) { date in
-                if let date = date {
-                    // ЗАМЕНЯЕМ CalendarDayCell на простой компонент
-                    DayCell(
-                        date: date,
-                        isSelected: isSameDay(date, selectedDate),
-                        hasTraining: !trainingManager.getTrainings(for: date).isEmpty,
-                        isCurrentMonth: isCurrentMonth(date),
-                        isToday: isToday(date)
-                    ) {
-                        selectedDate = date
-                    }
-                } else {
-                    Rectangle()
-                        .fill(Color.clear)
-                        .frame(height: 44)
-                }
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(Color(.systemBackground))
-    }
-    
-    private var trainingDetailsView: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Section header
-            HStack {
-                Text(formattedFullDate(selectedDate))
-                    .font(.system(.headline, design: .rounded))
-                    .fontWeight(.semibold)
-                
-                Spacer()
-                
-                Button(action: addTraining) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "plus.circle.fill")
-                        Text("Добавить")
-                    }
-                    .font(.system(.subheadline, design: .rounded))
-                    .fontWeight(.medium)
-                    .foregroundColor(.blue)
-                }
-            }
-            .padding(.horizontal, 20)
-            
-            if trainingsForSelectedDate.isEmpty {
-                emptyStateView
-            } else {
-                ScrollView {
-                    LazyVStack(spacing: 12) {
+            // Список тренировок на выбранный день
+            List {
+                Section {
+                    if trainingsForSelectedDate.isEmpty {
+                        VStack(spacing: 16) {
+                            Image(systemName: "calendar.badge.exclamationmark")
+                                .font(.system(size: 50))
+                                .foregroundColor(.gray.opacity(0.5))
+                            
+                            Text("Нет тренировок на этот день")
+                                .font(.headline)
+                                .foregroundColor(.secondary)
+                            
+                            Text("Нажмите + чтобы добавить тренировку")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 200)
+                        .multilineTextAlignment(.center)
+                    } else {
                         ForEach(trainingsForSelectedDate) { training in
-                            // ЗАМЕНЯЕМ TrainingCardView на простой компонент
-                            SimpleTrainingCard(
+                            TrainingCalendarRow(
                                 training: training,
-                                onEdit: {
-                                    editingTraining = training
-                                    showingEditView = true
-                                },
-                                onDelete: {
-                                    deleteTraining(training)
+                                onTap: {
+                                    selectedTraining = training
+                                    showingEditTraining = true
                                 }
                             )
+                            .swipeActions(edge: .trailing) {
+                                Button(role: .destructive) {
+                                    deleteTraining(training)
+                                } label: {
+                                    Label("Удалить", systemImage: "trash")
+                                }
+                            }
                         }
                     }
-                    .padding(.horizontal, 20)
+                }
+            }
+            .listStyle(.insetGrouped)
+            
+            Spacer()
+        }
+        .navigationTitle("Календарь тренировок")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    selectedTraining = nil
+                    showingNewTraining = true
+                }) {
+                    Image(systemName: "plus")
                 }
             }
         }
-        .padding(.vertical, 16)
+        .sheet(isPresented: $showingNewTraining) {
+            TrainingEditView(viewModel: viewModel, training: selectedTraining)
+        }
+        .sheet(isPresented: $showingEditTraining) {
+            if let training = selectedTraining {
+                TrainingEditView(viewModel: viewModel, training: training)
+            }
+        }
+        .onAppear {
+            // Убрать сложную логику с UserDefaults
+            print("📅 Календарь загружен. Всего тренировок: \(viewModel.trainings.count)")
+        }
     }
     
-    private var emptyStateView: some View {
+    private var trainingsForSelectedDate: [Training] {
+        viewModel.trainingsForDate(selectedDate)
+    }
+    
+    private func deleteTraining(_ training: Training) {
+        withAnimation {
+            viewModel.deleteTraining(training)
+        }
+    }
+}
+
+// MARK: - Компонент заголовка календаря
+struct CalendarHeader: View {
+    @Binding var selectedDate: Date
+    @State private var currentMonth = Date()
+    
+    private let calendar = Calendar.current
+    private let daysOfWeek = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
+    
+    var body: some View {
         VStack(spacing: 16) {
-            Image(systemName: "dumbbell.slash")
-                .font(.system(size: 50))
-                .foregroundColor(.secondary.opacity(0.5))
-            
-            VStack(spacing: 8) {
-                Text("Нет тренировок")
-                    .font(.system(.headline, design: .rounded))
-                    .foregroundColor(.primary)
-                
-                Text("На \(formattedDate(selectedDate)) тренировки не запланированы")
-                    .font(.system(.body, design: .rounded))
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            
-            Button(action: addTraining) {
-                HStack {
-                    Image(systemName: "plus.circle.fill")
-                    Text("Добавить тренировку")
-                }
-                .font(.system(.subheadline, design: .rounded))
-                .fontWeight(.medium)
-                .foregroundColor(.white)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
-                .background(Color.blue)
-                .cornerRadius(12)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 40)
-        .padding(.horizontal, 20)
-    }
-}
-
-// ДОБАВЛЯЕМ ПРОСТЫЕ КОМПОНЕНТЫ В КОНЦЕ ФАЙЛА
-struct DayCell: View {
-    let date: Date
-    let isSelected: Bool
-    let hasTraining: Bool
-    let isCurrentMonth: Bool
-    let isToday: Bool
-    let onTap: () -> Void
-    
-    var body: some View {
-        Button(action: onTap) {
-            VStack(spacing: 4) {
-                Text(dayString(from: date))
-                    .font(.system(.caption, design: .rounded))
-                    .fontWeight(.medium)
-                    .foregroundColor(textColor)
-                
-                if hasTraining {
-                    Circle()
-                        .fill(Color.blue)
-                        .frame(width: 6, height: 6)
-                }
-            }
-            .frame(width: 44, height: 44)
-            .background(backgroundColor)
-            .cornerRadius(8)
-        }
-        .buttonStyle(.plain)
-    }
-    
-    private func dayString(from date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "d"
-        return formatter.string(from: date)
-    }
-    
-    private var textColor: Color {
-        if !isCurrentMonth {
-            return .secondary.opacity(0.5)
-        }
-        if isSelected {
-            return .white
-        }
-        return .primary
-    }
-    
-    private var backgroundColor: Color {
-        if isSelected {
-            return .blue
-        }
-        if isToday {
-            return .blue.opacity(0.1)
-        }
-        return .clear
-    }
-}
-
-struct SimpleTrainingCard: View {
-    let training: Training
-    let onEdit: () -> Void
-    let onDelete: () -> Void
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+            // Месяц и год
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(training.title)
+                Button(action: previousMonth) {
+                    Image(systemName: "chevron.left")
                         .font(.headline)
-                    
-                    Text(timeString(from: training.date))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
                 }
                 
                 Spacer()
                 
-                Menu {
-                    Button("Редактировать", action: onEdit)
-                    Button("Удалить", role: .destructive, action: onDelete)
-                } label: {
-                    Image(systemName: "ellipsis")
+                Text(monthYearString)
+                    .font(.headline)
+                
+                Spacer()
+                
+                Button(action: nextMonth) {
+                    Image(systemName: "chevron.right")
+                        .font(.headline)
+                }
+            }
+            .padding(.horizontal)
+            
+            // Дни недели
+            HStack {
+                ForEach(daysOfWeek, id: \.self) { day in
+                    Text(day)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .frame(maxWidth: .infinity)
                         .foregroundColor(.secondary)
                 }
             }
+            .padding(.horizontal)
+            
+            // Дни месяца
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 12) {
+                ForEach(daysInMonth(), id: \.self) { date in
+                    if let date = date {
+                        DayCell(
+                            date: date,
+                            isSelected: isSameDay(date, selectedDate),
+                            isToday: isSameDay(date, Date()),
+                            hasTraining: hasTraining(on: date)
+                        ) {
+                            selectedDate = date
+                        }
+                    } else {
+                        Text("")
+                            .frame(height: 40)
+                    }
+                }
+            }
+            .padding(.horizontal)
         }
-        .padding()
+        .padding(.vertical)
         .background(Color(.systemBackground))
-        .cornerRadius(12)
     }
     
-    private func timeString(from date: Date) -> String {
+    private var monthYearString: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
-        return formatter.string(from: date)
-    }
-}
-
-// MARK: - Helper Functions
-extension TrainingCalendarView {
-    private func previousMonth() {
-        guard let newDate = calendar.date(byAdding: .month, value: -1, to: currentMonth) else { return }
-        currentMonth = newDate
-    }
-    
-    private func nextMonth() {
-        guard let newDate = calendar.date(byAdding: .month, value: 1, to: currentMonth) else { return }
-        currentMonth = newDate
-    }
-    
-    private func monthYearString(from date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM yyyy"
+        formatter.dateFormat = "LLLL yyyy"
         formatter.locale = Locale(identifier: "ru_RU")
-        return formatter.string(from: date).capitalized
-    }
-    
-    private func formattedDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "d MMMM"
-        formatter.locale = Locale(identifier: "ru_RU")
-        return formatter.string(from: date)
-    }
-    
-    private func formattedFullDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "d MMMM, EEEE"
-        formatter.locale = Locale(identifier: "ru_RU")
-        return formatter.string(from: date)
+        return formatter.string(from: currentMonth).capitalized
     }
     
     private func daysInMonth() -> [Date?] {
         guard let monthInterval = calendar.dateInterval(of: .month, for: currentMonth),
-              let monthFirstWeek = calendar.dateInterval(of: .weekOfMonth, for: monthInterval.start) else {
+              let monthFirstWeek = calendar.dateInterval(of: .weekOfMonth, for: monthInterval.start),
+              let monthLastWeek = calendar.dateInterval(of: .weekOfMonth, for: monthInterval.end - 1) else {
             return []
         }
         
-        var days: [Date?] = []
-        let totalDays = 42 // 6 weeks
+        let firstDate = monthFirstWeek.start
+        let lastDate = monthLastWeek.end
         
-        for offset in 0..<totalDays {
-            if let date = calendar.date(byAdding: .day, value: offset, to: monthFirstWeek.start) {
-                days.append(date)
+        var dates: [Date?] = []
+        var currentDate = firstDate
+        
+        while currentDate < lastDate {
+            if calendar.isDate(currentDate, equalTo: monthInterval.start, toGranularity: .month) {
+                dates.append(currentDate)
+            } else {
+                dates.append(nil)
             }
+            currentDate = calendar.date(byAdding: .day, value: 1, to: currentDate)!
         }
         
-        return days
+        return dates
     }
     
     private func isSameDay(_ date1: Date, _ date2: Date) -> Bool {
         calendar.isDate(date1, inSameDayAs: date2)
     }
     
-    private func isCurrentMonth(_ date: Date) -> Bool {
-        calendar.isDate(date, equalTo: currentMonth, toGranularity: .month)
+    private func hasTraining(on date: Date) -> Bool {
+        // Более простая реализация
+        let trainings = TrainingService.shared.getTrainings(for: date)
+        return !trainings.isEmpty
     }
     
-    private func isToday(_ date: Date) -> Bool {
-        calendar.isDateInToday(date)
-    }
-    
-    private func addTraining() {
-        editingTraining = nil
-        showingEditView = true
-    }
-    
-    private func createNewTraining(for date: Date) -> Training {
-        return Training(
-            id: UUID().uuidString,
-            title: "Новая тренировка",
-            date: date,
-            type: .strength
-        )
-    }
-    
-    private func saveTraining(_ training: Training) {
-            if editingTraining != nil {
-                trainingManager.updateTraining(training)
-                viewModel.saveTraining(training) // ДОБАВЬ ЭТУ СТРОКУ
-            } else {
-                trainingManager.addTraining(training)
-                viewModel.saveTraining(training) // ДОБАВЬ ЭТУ СТРОКУ
-            }
-            showingEditView = false
-            editingTraining = nil
-        }
-        
-        private func deleteTraining(_ training: Training) {
-            trainingManager.deleteTraining(training)
-            viewModel.deleteTraining(training) // ДОБАВЬ ЭТУ СТРОКУ
+    private func previousMonth() {
+        if let newMonth = calendar.date(byAdding: .month, value: -1, to: currentMonth) {
+            currentMonth = newMonth
         }
     }
+    
+    private func nextMonth() {
+        if let newMonth = calendar.date(byAdding: .month, value: 1, to: currentMonth) {
+            currentMonth = newMonth
+        }
+    }
+}
 
+// MARK: - Ячейка дня
+struct DayCell: View {
+    let date: Date
+    let isSelected: Bool
+    let isToday: Bool
+    let hasTraining: Bool
+    let onTap: () -> Void
+    
+    private let calendar = Calendar.current
+    
+    var body: some View {
+        Button(action: onTap) {
+            VStack(spacing: 4) {
+                ZStack {
+                    // Круг выделения
+                    if isSelected {
+                        Circle()
+                            .fill(Color.blue)
+                            .frame(width: 36, height: 36)
+                    } else if isToday {
+                        Circle()
+                            .stroke(Color.blue, lineWidth: 2)
+                            .frame(width: 36, height: 36)
+                    }
+                    
+                    // Номер дня
+                    Text("\(calendar.component(.day, from: date))")
+                        .font(.system(size: 16, weight: isSelected ? .bold : .regular))
+                        .foregroundColor(
+                            isSelected ? .white :
+                            isToday ? .blue :
+                            calendar.isDateInWeekend(date) ? .red :
+                            .primary
+                        )
+                }
+                .frame(width: 36, height: 36)
+                
+                // Индикатор тренировки
+                if hasTraining {
+                    Circle()
+                        .fill(Color.blue)
+                        .frame(width: 4, height: 4)
+                }
+            }
+            .frame(height: 50)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// MARK: - Строка тренировки в календаре
+struct TrainingCalendarRow: View {
+    let training: Training
+    let onTap: () -> Void
+    
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 12) {
+                // Время
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(timeString)
+                        .font(.headline)
+                        .foregroundColor(.blue)
+                    
+                    Text(durationString)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .frame(width: 80, alignment: .leading)
+                
+                // Основная информация
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text(training.title)
+                            .font(.headline)
+                            .lineLimit(1)
+                        
+                        Spacer()
+                        
+                        TrainingTypeBadge(type: training.type)
+                    }
+                    
+                    if !training.exercises.isEmpty {
+                        HStack(spacing: 4) {
+                            Image(systemName: "dumbbell")
+                                .font(.caption2)
+                            
+                            Text("\(training.exercises.count) упражнений")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+                
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+            .padding(.vertical, 8)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+    
+    private var timeString: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: training.date)
+    }
+    
+    private var durationString: String {
+        guard !training.exercises.isEmpty else { return "" }
+        // Примерная оценка длительности
+        let totalExercises = training.exercises.count
+        let estimatedMinutes = totalExercises * 5 // 5 минут на упражнение
+        return "~\(estimatedMinutes) мин"
+    }
+}
+
+// MARK: - Предпросмотр
 struct TrainingCalendarView_Previews: PreviewProvider {
     static var previews: some View {
-        TrainingCalendarView()
-            .environmentObject(TrainingService())
+        NavigationView {
+            TrainingCalendarView()
+                .environmentObject(TrainingViewModel())
+        }
     }
 }
