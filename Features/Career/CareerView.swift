@@ -9,26 +9,39 @@ struct CareerView: View {
                 // Уровень и прогресс
                 levelSection
                     .padding(.horizontal)
-                
+
+                healthSection
+                    .padding(.horizontal)
+
+                weeklyProgressSection
+                    .padding(.horizontal)
+
                 // Селектор периода и статистика вместе
                 VStack(spacing: 0) {
                     periodSelector
                     periodStatsSection
                 }
                 .background(Color(.systemBackground))
-                .cornerRadius(16)
+                .cornerRadius(14)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color(.separator).opacity(0.35), lineWidth: 0.5)
+                )
                 .padding(.horizontal)
                 
                 // Топ за месяц
                 topUsersSection
                     .padding(.horizontal)
+
+                achievementsSection
+                    .padding(.horizontal)
             }
             .padding(.vertical)
         }
         .background(Color(.systemGroupedBackground))
-        .navigationTitle("Моя карьера")
+        .navigationTitle("Прогресс")
         .navigationBarTitleDisplayMode(.inline)
-        
+
     }
     
     // MARK: - Секция уровня
@@ -39,15 +52,8 @@ struct CareerView: View {
                 // Иконка уровня
                 ZStack {
                     Circle()
-                        .fill(
-                            LinearGradient(
-                                gradient: Gradient(colors: [.blue, .purple]),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .fill(Color.blue)
                         .frame(width: 80, height: 80)
-                        .shadow(color: .blue.opacity(0.3), radius: 10)
                     
                     Image(systemName: "trophy.fill")
                         .font(.title)
@@ -93,10 +99,92 @@ struct CareerView: View {
             }
             .padding()
             .background(Color(.systemBackground))
-            .cornerRadius(16)
+            .cornerRadius(14)
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Color(.separator).opacity(0.35), lineWidth: 0.5)
+            )
         }
     }
-    
+
+    private var healthSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("Сегодня")
+                    .font(.headline)
+
+                Spacer()
+
+                Label("Health", systemImage: "heart.text.square.fill")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.red)
+            }
+
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: 10) {
+                ForEach(viewModel.healthMetrics) { metric in
+                    HealthProgressTile(metric: metric)
+                }
+            }
+        }
+        .padding(16)
+        .background(Color(.systemBackground))
+        .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color(.separator).opacity(0.35), lineWidth: 0.5)
+        )
+    }
+
+    private var weeklyProgressSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("Неделя")
+                    .font(.headline)
+
+                Spacer()
+
+                Text("цель: 3 тренировки")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            HStack(alignment: .bottom, spacing: 10) {
+                ForEach(viewModel.weeklyProgress) { day in
+                    WeeklyProgressBar(day: day)
+                }
+            }
+            .frame(height: 96)
+
+            HStack {
+                Label("\(viewModel.stats.currentStreak) дней подряд", systemImage: "flame.fill")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.orange)
+
+                Spacer()
+
+                Text("лучшее: \(viewModel.stats.bestStreak)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding(12)
+            .background(Color(.systemGray6))
+            .cornerRadius(12)
+        }
+        .padding(16)
+        .background(Color(.systemBackground))
+        .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color(.separator).opacity(0.35), lineWidth: 0.5)
+        )
+    }
+
     // MARK: - Селектор периода (цельная полоска с ползунком) - ИСПРАВЛЕН
     
     private var periodSelector: some View {
@@ -114,7 +202,7 @@ struct CareerView: View {
                     let index = CGFloat(TimePeriod.allCases.firstIndex(of: viewModel.selectedTimePeriod) ?? 0)
                     
                     Capsule()
-                        .fill(Color.blue.opacity(0.15))
+                        .fill(Color(.systemBackground))
                         .frame(width: width, height: 40)
                         .padding(2)
                         .offset(x: width * index - 2)
@@ -231,7 +319,7 @@ struct CareerView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10) // ← УМЕНЬШИЛ вертикальные отступы
-            .background(Color.gray.opacity(0.05))
+            .background(Color(.systemGray6))
             .cornerRadius(12)
             .padding(.horizontal, 16)
             .padding(.bottom, 12) // ← УМЕНЬШИЛ отступ снизу
@@ -315,7 +403,7 @@ struct CareerView: View {
                     }
                     .padding()
                     .background(user.isCurrentUser ?
-                               Color.blue.opacity(0.1) : Color(.systemBackground))
+                               Color(.systemGray6) : Color(.systemBackground))
                     
                     if index < viewModel.topUsers.count - 1 {
                         Divider()
@@ -324,15 +412,48 @@ struct CareerView: View {
                 }
             }
             .background(Color(.systemBackground))
-            .cornerRadius(16)
+            .cornerRadius(14)
             .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Color(.separator).opacity(0.35), lineWidth: 0.5)
             )
         }
         .padding()
         .background(Color(.systemBackground))
-        .cornerRadius(16)
+        .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color(.separator).opacity(0.35), lineWidth: 0.5)
+        )
+    }
+
+    private var achievementsSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("Достижения")
+                    .font(.headline)
+
+                Spacer()
+
+                Text("\(viewModel.achievements.filter { $0.isUnlocked }.count)/\(viewModel.achievements.count)")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.secondary)
+            }
+
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                ForEach(viewModel.achievements) { achievement in
+                    AchievementCard(achievement: achievement)
+                }
+            }
+        }
+        .padding(16)
+        .background(Color(.systemBackground))
+        .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color(.separator).opacity(0.35), lineWidth: 0.5)
+        )
     }
     
     // MARK: - Вспомогательные функции
@@ -417,12 +538,117 @@ struct CareerStatCard: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
-        .background(Color(.systemBackground))
+        .background(Color(.systemGray6))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(color.opacity(0.2), lineWidth: 2)
+                .stroke(Color(.separator).opacity(0.3), lineWidth: 0.5)
         )
+    }
+}
+
+struct HealthProgressTile: View {
+    let metric: HealthProgressMetric
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            Image(systemName: metric.icon)
+                .font(.headline)
+                .foregroundColor(metric.color)
+
+            Text(metric.value)
+                .font(.headline)
+                .fontWeight(.bold)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+
+            Text(metric.title)
+                .font(.caption)
+                .foregroundColor(.secondary)
+
+            ProgressView(value: metric.progress)
+                .progressViewStyle(LinearProgressViewStyle(tint: metric.color))
+
+            Text("из \(metric.goal)")
+                .font(.caption2)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, minHeight: 132, alignment: .topLeading)
+        .padding(12)
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
+    }
+}
+
+struct WeeklyProgressBar: View {
+    let day: WeeklyProgress
+
+    var body: some View {
+        VStack(spacing: 7) {
+            Spacer()
+
+            ZStack(alignment: .bottom) {
+                Capsule()
+                    .fill(Color.gray.opacity(0.16))
+                    .frame(width: 22, height: 64)
+
+                Capsule()
+                    .fill(day.progress >= 1 ? Color.green : Color.blue)
+                    .frame(width: 22, height: max(8, 64 * day.progress))
+            }
+
+            Text(day.day)
+                .font(.caption2)
+                .fontWeight(.semibold)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+struct AchievementCard: View {
+    let achievement: Achievement
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Image(systemName: achievement.icon)
+                    .font(.title3)
+                    .foregroundColor(achievement.isUnlocked ? achievement.color : .gray)
+                    .frame(width: 38, height: 38)
+                    .background((achievement.isUnlocked ? achievement.color : Color.gray).opacity(0.12))
+                    .clipShape(Circle())
+
+                Spacer()
+
+                Image(systemName: achievement.isUnlocked ? "checkmark.seal.fill" : "lock.fill")
+                    .font(.caption)
+                    .foregroundColor(achievement.isUnlocked ? .green : .secondary)
+            }
+
+            Text(achievement.title)
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .lineLimit(1)
+
+            Text(achievement.description)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .lineLimit(2)
+
+            ProgressView(value: achievement.progress)
+                .progressViewStyle(LinearProgressViewStyle(tint: achievement.isUnlocked ? achievement.color : .gray))
+
+            Text(achievement.isUnlocked ? "Получено" : "\(Int(achievement.progress * 100))%")
+                .font(.caption2)
+                .fontWeight(.semibold)
+                .foregroundColor(achievement.isUnlocked ? .green : .secondary)
+        }
+        .frame(maxWidth: .infinity, minHeight: 166, alignment: .topLeading)
+        .padding(12)
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
+        .opacity(achievement.isUnlocked ? 1 : 0.78)
     }
 }
 

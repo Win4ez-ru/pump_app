@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import Combine
 
 // TimePeriod выносим за пределы класса
 enum TimePeriod: String, CaseIterable, Identifiable {
@@ -16,11 +17,16 @@ class CareerViewModel: ObservableObject {
     @Published var weeklyProgress: [WeeklyProgress] = []
     @Published var achievements: [Achievement] = []
     @Published var stats: CareerStats
-    
+
+    let healthMetrics: [HealthProgressMetric] = [
+        HealthProgressMetric(title: "Шаги", value: "8 420", goal: "10 000", progress: 0.84, icon: "figure.walk", color: .green),
+        HealthProgressMetric(title: "Активность", value: "48", goal: "60 мин", progress: 0.8, icon: "heart.fill", color: .red),
+        HealthProgressMetric(title: "КБЖУ", value: "82%", goal: "плана", progress: 0.82, icon: "fork.knife", color: .orange)
+    ]
+
     // Добавляем вычисляемое свойство для прогресса опыта
     var experienceProgress: Double {
         let experience = Double(stats.totalTrainings)
-        let levelExperience = Double(stats.level * 10)
         let progress = experience.truncatingRemainder(dividingBy: 10) / 10.0
         return progress
     }
@@ -135,6 +141,16 @@ struct Achievement: Identifiable {
     let color: Color
     let isUnlocked: Bool
     let progress: Double
+}
+
+struct HealthProgressMetric: Identifiable {
+    let id = UUID()
+    let title: String
+    let value: String
+    let goal: String
+    let progress: Double
+    let icon: String
+    let color: Color
 }
 
 struct CareerStats {
