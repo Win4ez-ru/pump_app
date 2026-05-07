@@ -17,15 +17,14 @@ struct ProfileView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                // Profile header
                 profileHeaderView
-                
-                // User balance
+                clientReadinessSection
+
+                fitnessProfileSection
+
                 BalanceCard {
                     showingPayments = true
                 }
-
-                fitnessProfileSection
 
                 // Основные настройки (ВЗЯТО ИЗ SETTINGSVIEW)
                 VStack(alignment: .leading, spacing: 15) {
@@ -182,37 +181,94 @@ struct ProfileView: View {
     }
     
     private var profileHeaderView: some View {
-        VStack(spacing: 15) {
-            Image(systemName: "person.circle.fill")
-                .font(.system(size: 80))
-                .foregroundColor(.blue)
-            
-            VStack(spacing: 5) {
-                Text(profileViewModel.fitnessProfile.displayName.isEmpty ? (user?.displayName ?? "Гость") : profileViewModel.fitnessProfile.displayName)
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                
-                if let email = user?.email {
-                    Text(email)
-                        .font(.body)
+        HStack(alignment: .top, spacing: 14) {
+            ZStack {
+                Circle()
+                    .fill(Color.blue.opacity(0.12))
+                    .frame(width: 82, height: 82)
+
+                Image(systemName: "person.fill")
+                    .font(.system(size: 40))
+                    .foregroundColor(.blue)
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(profileDisplayName)
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+
+                    Spacer()
+
+                    Button(action: { showingFitnessProfile = true }) {
+                        Image(systemName: "pencil")
+                            .font(.headline)
+                            .foregroundColor(.blue)
+                            .frame(width: 34, height: 34)
+                            .background(Color(.systemGray6))
+                            .clipShape(Circle())
+                    }
+                }
+
+                Text("\(profileViewModel.fitnessProfile.age) лет • \(profileViewModel.fitnessProfile.gender.title)")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+
+                if !profileViewModel.fitnessProfile.about.isEmpty {
+                    Text(profileViewModel.fitnessProfile.about)
+                        .font(.caption)
                         .foregroundColor(.secondary)
+                        .lineLimit(2)
+                }
+
+                HStack(spacing: 8) {
+                    ProfileStatusPill(title: authManager.hasSkippedLogin ? "Гость" : "Клиент", color: authManager.hasSkippedLogin ? .orange : .blue)
+                    ProfileStatusPill(title: profileViewModel.fitnessProfile.trainingPlace.title, color: .green)
+                    ProfileStatusPill(title: "\(profileViewModel.fitnessProfile.weeklyTrainingGoal)x/нед", color: .purple)
                 }
             }
-            
-            if authManager.hasSkippedLogin {
-                Text("Гостевой режим")
-                    .font(.caption)
-                    .foregroundColor(.orange)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 4)
-                    .background(Color.orange.opacity(0.1))
-                    .cornerRadius(8)
-            }
         }
-        .padding()
+        .padding(16)
         .frame(maxWidth: .infinity)
         .background(Color(.systemBackground))
-        .cornerRadius(12)
+        .cornerRadius(16)
+        .padding(.horizontal)
+    }
+
+    private var clientReadinessSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Готовность к подбору")
+                        .font(.headline)
+
+                    Text("Чем полнее профиль, тем точнее тренеры и будущий ML-рейтинг.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                Text("\(profileCompletion)%")
+                    .font(.title3)
+                    .fontWeight(.bold)
+                    .foregroundColor(.blue)
+            }
+
+            ProgressView(value: Double(profileCompletion), total: 100)
+                .progressViewStyle(LinearProgressViewStyle(tint: .blue))
+
+            HStack(spacing: 10) {
+                ReadinessItem(icon: "target", title: profileViewModel.fitnessProfile.goal.title, color: .blue)
+                ReadinessItem(icon: "figure.walk", title: profileViewModel.fitnessProfile.trainingExperience.title, color: .orange)
+                ReadinessItem(icon: "person.crop.circle.badge.checkmark", title: profileViewModel.fitnessProfile.preferredTrainerGender.title, color: .green)
+            }
+        }
+        .padding(16)
+        .background(Color(.systemBackground))
+        .cornerRadius(16)
         .padding(.horizontal)
     }
 
@@ -241,12 +297,29 @@ struct ProfileView: View {
                 ProfileMetricTile(icon: "location.fill", title: "Формат", value: profileViewModel.fitnessProfile.trainingPlace.title, color: .green)
                 ProfileMetricTile(icon: "chart.bar.fill", title: "Опыт", value: profileViewModel.fitnessProfile.trainingExperience.title, color: .purple)
                 ProfileMetricTile(icon: "calendar.badge.clock", title: "В неделю", value: "\(profileViewModel.fitnessProfile.weeklyTrainingGoal) трен.", color: .orange)
+                ProfileMetricTile(icon: "ruler.fill", title: "Рост", value: "\(profileViewModel.fitnessProfile.height) см", color: .cyan)
+                ProfileMetricTile(icon: "scalemass.fill", title: "Вес", value: "\(profileViewModel.fitnessProfile.weight) кг", color: .pink)
             }
         }
         .padding(16)
         .background(Color(.systemBackground))
         .cornerRadius(16)
         .padding(.horizontal)
+    }
+
+    private var profileDisplayName: String {
+        profileViewModel.fitnessProfile.displayName.isEmpty ? (user?.displayName ?? "Гость") : profileViewModel.fitnessProfile.displayName
+    }
+
+    private var profileCompletion: Int {
+        var score = 35
+        if !profileViewModel.fitnessProfile.displayName.isEmpty { score += 10 }
+        if !profileViewModel.fitnessProfile.about.isEmpty { score += 15 }
+        if profileViewModel.fitnessProfile.height > 0 { score += 10 }
+        if profileViewModel.fitnessProfile.weight > 0 { score += 10 }
+        if profileViewModel.fitnessProfile.weeklyTrainingGoal > 0 { score += 10 }
+        if profileViewModel.fitnessProfile.preferredTrainerGender != .any { score += 10 }
+        return min(score, 100)
     }
 
     private var logoutButton: some View {
@@ -288,6 +361,46 @@ struct ProfileMetricTile: View {
         }
         .frame(maxWidth: .infinity, minHeight: 88, alignment: .topLeading)
         .padding(12)
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
+    }
+}
+
+struct ProfileStatusPill: View {
+    let title: String
+    let color: Color
+
+    var body: some View {
+        Text(title)
+            .font(.caption2)
+            .fontWeight(.semibold)
+            .foregroundColor(color)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(color.opacity(0.12))
+            .cornerRadius(8)
+    }
+}
+
+struct ReadinessItem: View {
+    let icon: String
+    let title: String
+    let color: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Image(systemName: icon)
+                .font(.caption)
+                .foregroundColor(color)
+
+            Text(title)
+                .font(.caption)
+                .fontWeight(.semibold)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
         .background(Color(.systemGray6))
         .cornerRadius(12)
     }
@@ -368,6 +481,7 @@ struct PaymentsView: View {
                         trainingPaymentsSection
                     }
 
+                    paymentRulesCard
                     historySection
                 }
                 .padding()
@@ -389,11 +503,12 @@ struct PaymentsView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Раздельная оплата")
-                        .font(.headline)
+                    Text(selectedSection == .premium ? "Pump Premium" : "Тренировки")
+                        .font(.title2)
+                        .fontWeight(.bold)
 
-                    Text("Premium открывает функции приложения. Тренировки оплачиваются тренеру отдельно.")
-                        .font(.caption)
+                    Text("Premium открывает функции приложения. Тренировки оплачиваются тренеру отдельно после договоренности.")
+                        .font(.subheadline)
                         .foregroundColor(.secondary)
                         .lineLimit(3)
                 }
@@ -407,8 +522,8 @@ struct PaymentsView: View {
 
             HStack(spacing: 10) {
                 PaymentMetric(title: "Баланс", value: "1 500 ₽", color: .green)
-                PaymentMetric(title: "Premium", value: "Free", color: .blue)
-                PaymentMetric(title: "Занятий", value: "2", color: .orange)
+                PaymentMetric(title: "План", value: "Free", color: .blue)
+                PaymentMetric(title: "Свайпы", value: "5/день", color: .orange)
             }
         }
         .padding(16)
@@ -427,7 +542,20 @@ struct PaymentsView: View {
 
     private var premiumSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Pump Premium")
+            HStack {
+                Text("Доступ к функциям")
+                    .font(.headline)
+
+                Spacer()
+
+                Text("для клиента")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            PremiumComparisonCard()
+
+            Text("Тарифы")
                 .font(.headline)
 
             ForEach(premiumPlans) { plan in
@@ -438,8 +566,16 @@ struct PaymentsView: View {
 
     private var trainingPaymentsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Оплата тренеру")
-                .font(.headline)
+            HStack {
+                Text("Занятия с тренером")
+                    .font(.headline)
+
+                Spacer()
+
+                Text("отдельно")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
 
             Text("Эти платежи относятся к реальным персональным тренировкам. В будущем здесь будет Apple Pay/карта и комиссия платформы.")
                 .font(.caption)
@@ -454,6 +590,21 @@ struct PaymentsView: View {
                 }
             }
         }
+    }
+
+    private var paymentRulesCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label("Как устроена оплата", systemImage: "info.circle.fill")
+                .font(.headline)
+                .foregroundColor(.blue)
+
+            PaymentRuleRow(icon: "star.fill", text: "Premium влияет на поиск: больше свайпов, расширенные фильтры и сравнение тренеров.")
+            PaymentRuleRow(icon: "dumbbell.fill", text: "Тренировки оплачиваются отдельно конкретному тренеру после принятия запроса.")
+            PaymentRuleRow(icon: "shield.fill", text: "Для MVP это демо-экран. Реальные платежи подключаются через backend и платежный провайдер.")
+        }
+        .padding(16)
+        .background(Color(.systemBackground))
+        .cornerRadius(16)
     }
 
     private var historySection: some View {
@@ -516,7 +667,7 @@ struct PremiumPlan: Identifiable {
             price: "299 ₽",
             period: "месяц",
             badge: "лучший выбор",
-            features: ["Больше свайпов", "Расширенные фильтры", "Сравнение тренеров", "Расширенный прогресс"]
+            features: ["50 свайпов в день", "Возраст, стаж и достижения тренера", "Сравнение тренеров", "Расширенный прогресс"]
         )
     ]
 }
@@ -599,6 +750,84 @@ struct PaymentMetric: View {
         .padding(.vertical, 10)
         .background(color.opacity(0.1))
         .cornerRadius(12)
+    }
+}
+
+struct PremiumComparisonCard: View {
+    private let rows: [(feature: String, free: String, premium: String)] = [
+        ("Свайпы", "5/день", "50/день"),
+        ("Фильтры", "база", "полные"),
+        ("Сравнение", "-", "есть"),
+        ("Прогресс", "база", "расширенный")
+    ]
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text("Функция")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                Text("Free")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .frame(width: 78)
+
+                Text("Premium")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.blue)
+                    .frame(width: 88)
+            }
+            .padding(.bottom, 8)
+
+            ForEach(rows, id: \.feature) { row in
+                HStack {
+                    Text(row.feature)
+                        .font(.subheadline)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                    Text(row.free)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .frame(width: 78)
+
+                    Text(row.premium)
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.blue)
+                        .frame(width: 88)
+                }
+                .padding(.vertical, 9)
+
+                if row.feature != rows.last?.feature {
+                    Divider()
+                }
+            }
+        }
+        .padding(14)
+        .background(Color(.systemBackground))
+        .cornerRadius(16)
+    }
+}
+
+struct PaymentRuleRow: View {
+    let icon: String
+    let text: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: icon)
+                .font(.caption)
+                .foregroundColor(.blue)
+                .frame(width: 22)
+
+            Text(text)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 }
 
@@ -793,59 +1022,18 @@ struct FitnessProfileEditView: View {
 
     var body: some View {
         NavigationView {
-            Form {
-                Section("Основное") {
-                    TextField("Имя", text: $draft.displayName)
-
-                    Picker("Пол", selection: $draft.gender) {
-                        ForEach(ClientGender.allCases) { gender in
-                            Text(gender.title).tag(gender)
-                        }
-                    }
-
-                    Stepper("Возраст: \(draft.age)", value: $draft.age, in: 14...90)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    editorHeader
+                    personalSection
+                    aboutSection
+                    bodyParamsSection
+                    trainingSection
+                    trainerPreferenceSection
                 }
-
-                Section("О себе") {
-                    TextEditor(text: $draft.about)
-                        .frame(minHeight: 90)
-                }
-
-                Section("Параметры") {
-                    Stepper("Рост: \(draft.height) см", value: $draft.height, in: 120...230)
-                    Stepper("Вес: \(draft.weight) кг", value: $draft.weight, in: 35...220)
-                }
-
-                Section("Тренировки") {
-                    Picker("Цель", selection: $draft.goal) {
-                        ForEach(FitnessGoal.allCases) { goal in
-                            Text(goal.title).tag(goal)
-                        }
-                    }
-
-                    Picker("Где тренироваться", selection: $draft.trainingPlace) {
-                        ForEach(TrainingPlace.allCases) { place in
-                            Text(place.title).tag(place)
-                        }
-                    }
-
-                    Picker("Опыт", selection: $draft.trainingExperience) {
-                        ForEach(ClientTrainingExperience.allCases) { experience in
-                            Text(experience.title).tag(experience)
-                        }
-                    }
-
-                    Stepper("Тренировок в неделю: \(draft.weeklyTrainingGoal)", value: $draft.weeklyTrainingGoal, in: 1...7)
-                }
-
-                Section("Предпочтения") {
-                    Picker("Пол тренера", selection: $draft.preferredTrainerGender) {
-                        ForEach(TrainerGender.allCases) { gender in
-                            Text(gender.title).tag(gender)
-                        }
-                    }
-                }
+                .padding(20)
             }
+            .background(Color(.systemGroupedBackground))
             .navigationTitle("Фитнес-профиль")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -864,6 +1052,161 @@ struct FitnessProfileEditView: View {
                 }
             }
         }
+    }
+
+    private var editorHeader: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Анкета для подбора")
+                .font(.title2)
+                .fontWeight(.bold)
+
+            Text("Эти данные помогут показывать тренеров по цели, опыту и удобному формату тренировок.")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.systemBackground))
+        .cornerRadius(16)
+    }
+
+    private var personalSection: some View {
+        ProfileEditorCard(title: "Основное") {
+            TextField("Имя", text: $draft.displayName)
+                .textFieldStyle(.roundedBorder)
+
+            Picker("Пол", selection: $draft.gender) {
+                ForEach(ClientGender.allCases) { gender in
+                    Text(gender.title).tag(gender)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            ProfileStepperRow(title: "Возраст", value: "\(draft.age) лет") {
+                Stepper("", value: $draft.age, in: 14...90)
+                    .labelsHidden()
+            }
+        }
+    }
+
+    private var aboutSection: some View {
+        ProfileEditorCard(title: "О себе") {
+            TextEditor(text: $draft.about)
+                .frame(minHeight: 104)
+                .padding(8)
+                .background(Color(.systemGray6))
+                .cornerRadius(12)
+        }
+    }
+
+    private var bodyParamsSection: some View {
+        ProfileEditorCard(title: "Параметры") {
+            ProfileStepperRow(title: "Рост", value: "\(draft.height) см") {
+                Stepper("", value: $draft.height, in: 120...230)
+                    .labelsHidden()
+            }
+
+            ProfileStepperRow(title: "Вес", value: "\(draft.weight) кг") {
+                Stepper("", value: $draft.weight, in: 35...220)
+                    .labelsHidden()
+            }
+        }
+    }
+
+    private var trainingSection: some View {
+        ProfileEditorCard(title: "Тренировки") {
+            ProfileOptionGrid(title: "Цель", options: FitnessGoal.allCases, selection: $draft.goal)
+            ProfileOptionGrid(title: "Формат", options: TrainingPlace.allCases, selection: $draft.trainingPlace)
+            ProfileOptionGrid(title: "Опыт", options: ClientTrainingExperience.allCases, selection: $draft.trainingExperience)
+
+            ProfileStepperRow(title: "В неделю", value: "\(draft.weeklyTrainingGoal) трен.") {
+                Stepper("", value: $draft.weeklyTrainingGoal, in: 1...7)
+                    .labelsHidden()
+            }
+        }
+    }
+
+    private var trainerPreferenceSection: some View {
+        ProfileEditorCard(title: "Предпочтения") {
+            ProfileOptionGrid(title: "Пол тренера", options: TrainerGender.allCases, selection: $draft.preferredTrainerGender)
+        }
+    }
+}
+
+struct ProfileEditorCard<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text(title)
+                .font(.headline)
+
+            content
+        }
+        .padding(16)
+        .background(Color(.systemBackground))
+        .cornerRadius(16)
+    }
+}
+
+struct ProfileStepperRow<Control: View>: View {
+    let title: String
+    let value: String
+    @ViewBuilder let control: Control
+
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+
+                Text(value)
+                    .font(.headline)
+            }
+
+            Spacer()
+            control
+        }
+    }
+}
+
+struct ProfileOptionGrid<Option: Identifiable & CaseIterable & Hashable>: View where Option.AllCases: RandomAccessCollection {
+    let title: String
+    let options: Option.AllCases
+    @Binding var selection: Option
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            Text(title)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 112), spacing: 8)], alignment: .leading, spacing: 8) {
+                ForEach(options) { option in
+                    Button(action: { selection = option }) {
+                        Text(optionTitle(option))
+                            .font(.caption)
+                            .fontWeight(selection == option ? .semibold : .regular)
+                            .foregroundColor(selection == option ? .white : .primary)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 38)
+                            .background(selection == option ? Color.blue : Color(.systemGray6))
+                            .cornerRadius(10)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+        }
+    }
+
+    private func optionTitle(_ option: Option) -> String {
+        if let goal = option as? FitnessGoal { return goal.title }
+        if let place = option as? TrainingPlace { return place.title }
+        if let experience = option as? ClientTrainingExperience { return experience.title }
+        if let gender = option as? TrainerGender { return gender.title }
+        return "\(option.id)"
     }
 }
 

@@ -17,12 +17,28 @@ struct TrainerMatchingView: View {
                 profileSyncSection
                 requestStatusSection
                 trainerDeckSection
-                quickFilterSection
             }
             .padding(.vertical, 12)
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Подбор")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: { showingAdvancedSearch = true }) {
+                    ZStack(alignment: .topTrailing) {
+                        Image(systemName: "slider.horizontal.3")
+
+                        if hasActiveTrainerFilters {
+                            Circle()
+                                .fill(Color.blue)
+                                .frame(width: 8, height: 8)
+                                .offset(x: 5, y: -5)
+                        }
+                    }
+                }
+                .accessibilityLabel("Фильтры")
+            }
+        }
         .sheet(isPresented: $showingAdvancedSearch) {
             AdvancedSearchView(viewModel: viewModel)
         }
@@ -82,39 +98,15 @@ struct TrainerMatchingView: View {
                 Spacer()
             }
 
-            HStack(spacing: 10) {
-                Button(action: { showingMatchQuiz = true }) {
-                    Label("Пройти тест", systemImage: "list.clipboard")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 44)
-                        .background(Color.blue)
-                        .cornerRadius(10)
-                }
-
-                Button(action: { showingRequests = true }) {
-                    Label("Запросы", systemImage: "paperplane.fill")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.blue)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 44)
-                        .background(Color(.systemGray6))
-                        .cornerRadius(10)
-                }
-            }
-
-            Button(action: { showingAdvancedSearch = true }) {
-                Label("Настроить фильтры тренера", systemImage: "slider.horizontal.3")
+            Button(action: { showingMatchQuiz = true }) {
+                Label("Обновить анкету подбора", systemImage: "list.clipboard")
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                .foregroundColor(.primary)
-                .frame(maxWidth: .infinity)
-                .frame(height: 44)
-                .background(Color(.systemGray6))
-                .cornerRadius(10)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 44)
+                    .background(Color.blue)
+                    .cornerRadius(10)
             }
         }
         .padding(18)
@@ -176,6 +168,14 @@ struct TrainerMatchingView: View {
         .padding(.horizontal)
     }
 
+    private var hasActiveTrainerFilters: Bool {
+        !viewModel.selectedFilters.isEmpty ||
+        viewModel.selectedTrainerGender != .any ||
+        viewModel.preferredMinAge != 24 ||
+        viewModel.preferredMaxAge != 45 ||
+        viewModel.minTrainerExperience != 0
+    }
+
     private var trainerDeckSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
@@ -222,6 +222,7 @@ struct TrainerMatchingView: View {
                     }
                 )
                 .padding(.horizontal)
+                .id(trainer.id)
                 .offset(x: dragOffset.width, y: dragOffset.height * 0.08)
                 .rotationEffect(.degrees(Double(dragOffset.width / 24)))
                 .gesture(
@@ -233,28 +234,6 @@ struct TrainerMatchingView: View {
                             handleSwipe(value.translation, trainer: trainer)
                         }
                 )
-            }
-        }
-    }
-
-    private var quickFilterSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Быстрый выбор")
-                .font(.headline)
-                .padding(.horizontal, 20)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(viewModel.quickFilters) { filter in
-                        FilterChip(
-                            title: filter.name,
-                            isSelected: viewModel.selectedFilters.contains(filter)
-                        ) {
-                            viewModel.toggleFilter(filter)
-                        }
-                    }
-                }
-                .padding(.horizontal, 20)
             }
         }
     }
@@ -336,11 +315,8 @@ struct TrainerRequestCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 12) {
-                Image(systemName: trainer.imageName)
-                    .font(.system(size: 42))
-                    .foregroundColor(.blue)
+                TrainerAvatarImage(trainer: trainer)
                     .frame(width: 52, height: 52)
-                    .background(Color(.systemGray6))
                     .clipShape(Circle())
 
                 VStack(alignment: .leading, spacing: 4) {

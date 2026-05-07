@@ -81,16 +81,20 @@ struct ChatListView: View {
                 emptyChatsView
             } else {
                 ScrollView {
-                    VStack(spacing: 14) {
+                    VStack(alignment: .leading, spacing: 16) {
+                        chatsHeader
+                        activePlanCard
                         chatSummary
 
-                        LazyVStack(spacing: 1) {
+                        Text("Диалоги")
+                            .font(.headline)
+                            .padding(.horizontal, 2)
+
+                        LazyVStack(spacing: 10) {
                             ForEach(chats) { chat in
                                 ChatListItem(chat: chat)
                             }
                         }
-                        .background(Color(.systemBackground))
-                        .cornerRadius(16)
                     }
                     .padding()
                 }
@@ -106,6 +110,53 @@ struct ChatListView: View {
             ChatSummaryTile(icon: "bell.fill", value: "\(chats.reduce(0) { $0 + $1.unreadCount })", title: "новых", color: .orange)
             ChatSummaryTile(icon: "calendar.badge.clock", value: "1", title: "план", color: .green)
         }
+    }
+
+    private var chatsHeader: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Text("Тренеры на связи")
+                .font(.title2)
+                .fontWeight(.bold)
+
+            Text("Здесь будут чаты после принятия запроса, быстрые договоренности и план первой тренировки.")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var activePlanCard: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "calendar.badge.clock")
+                .font(.title3)
+                .foregroundColor(.green)
+                .frame(width: 44, height: 44)
+                .background(Color(.systemGray6))
+                .clipShape(Circle())
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Следующий шаг")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Text("Пробная онлайн-тренировка с Никой")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+
+                Text("Сегодня, 19:30")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .padding(14)
+        .background(Color(.systemBackground))
+        .cornerRadius(14)
     }
 
     private var emptyChatsView: some View {
@@ -164,11 +215,14 @@ struct Chat: Identifiable {
     let id: String
     let participantName: String
     let participantAvatar: String
+    let participantPhotoName: String
     let specialization: String
     let matchStatus: ChatMatchStatus
     let lastMessage: String
     let lastMessageTime: Date
     let unreadCount: Int
+    let isOnline: Bool
+    let nextSession: String?
     let messages: [ChatMessage]
 
     static let demoChats: [Chat] = [
@@ -176,11 +230,14 @@ struct Chat: Identifiable {
             id: "1",
             participantName: "Ника Морозова",
             participantAvatar: "person.crop.circle.fill",
+            participantPhotoName: "trainer_6_1",
             specialization: "Похудение и питание",
             matchStatus: .accepted,
             lastMessage: "Отлично, тогда начнем с мягкой недели и шагов.",
             lastMessageTime: Date().addingTimeInterval(-1200),
             unreadCount: 2,
+            isOnline: true,
+            nextSession: "Сегодня, 19:30",
             messages: [
                 ChatMessage(id: "1", text: "Привет! Я посмотрела твой профиль: цель - похудение, формат онлайн, 3 тренировки в неделю.", time: Date().addingTimeInterval(-4200), isFromCurrentUser: false),
                 ChatMessage(id: "2", text: "Да, хочу начать без перегруза и понять, как отслеживать питание.", time: Date().addingTimeInterval(-3900), isFromCurrentUser: true),
@@ -191,11 +248,14 @@ struct Chat: Identifiable {
             id: "2",
             participantName: "Мария Петрова",
             participantAvatar: "person.crop.circle.fill",
+            participantPhotoName: "trainer_2_1",
             specialization: "Йога и растяжка",
             matchStatus: .requestPending,
             lastMessage: "Запрос отправлен. Тренер обычно отвечает за 1 час.",
             lastMessageTime: Date().addingTimeInterval(-7200),
             unreadCount: 0,
+            isOnline: false,
+            nextSession: nil,
             messages: [
                 ChatMessage(id: "1", text: "Вы отправили запрос тренеру. Когда Мария примет его, здесь откроется полноценный чат.", time: Date().addingTimeInterval(-7200), isFromCurrentUser: false)
             ]
@@ -204,11 +264,14 @@ struct Chat: Identifiable {
             id: "3",
             participantName: "Алексей Иванов",
             participantAvatar: "person.crop.circle.fill",
+            participantPhotoName: "trainer_1_1",
             specialization: "Силовые тренировки",
             matchStatus: .accepted,
             lastMessage: "На первой встрече проверим технику базовых движений.",
             lastMessageTime: Date().addingTimeInterval(-86400),
             unreadCount: 0,
+            isOnline: true,
+            nextSession: "Завтра, 08:00",
             messages: [
                 ChatMessage(id: "1", text: "Привет! Вижу, что тебе интересны силовые и тренировки дома/в зале.", time: Date().addingTimeInterval(-90000), isFromCurrentUser: false),
                 ChatMessage(id: "2", text: "Да, хочу понять, как безопасно увеличить нагрузку.", time: Date().addingTimeInterval(-88000), isFromCurrentUser: true),
@@ -290,12 +353,7 @@ struct ChatListItem: View {
     var body: some View {
         NavigationLink(destination: ChatDetailView(chat: chat)) {
             HStack(spacing: 12) {
-                Image(systemName: chat.participantAvatar)
-                    .font(.system(size: 45))
-                    .foregroundColor(.blue)
-                    .frame(width: 54, height: 54)
-                    .background(Color.blue.opacity(0.1))
-                    .clipShape(Circle())
+                ChatAvatar(chat: chat, size: 58)
 
                 VStack(alignment: .leading, spacing: 5) {
                     HStack {
@@ -311,10 +369,7 @@ struct ChatListItem: View {
                     }
 
                     HStack(spacing: 6) {
-                        Label(chat.matchStatus.rawValue, systemImage: chat.matchStatus.icon)
-                            .font(.caption2)
-                            .fontWeight(.semibold)
-                            .foregroundColor(chat.matchStatus.color)
+                        ChatStatusPill(status: chat.matchStatus)
 
                         Text(chat.specialization)
                             .font(.caption2)
@@ -326,14 +381,21 @@ struct ChatListItem: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .lineLimit(1)
+
+                    if let nextSession = chat.nextSession {
+                        Label(nextSession, systemImage: "calendar")
+                            .font(.caption2)
+                            .foregroundColor(.green)
+                    }
                 }
 
                 if chat.unreadCount > 0 {
                     unreadBadge
                 }
             }
-            .padding()
+            .padding(14)
             .background(Color(.systemBackground))
+            .cornerRadius(14)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -345,6 +407,43 @@ struct ChatListItem: View {
             .frame(width: 22, height: 22)
             .background(Color.blue)
             .clipShape(Circle())
+    }
+}
+
+struct ChatAvatar: View {
+    let chat: Chat
+    let size: CGFloat
+
+    var body: some View {
+        ZStack(alignment: .bottomTrailing) {
+            Image(chat.participantPhotoName)
+                .resizable()
+                .scaledToFill()
+                .frame(width: size, height: size)
+                .clipShape(Circle())
+
+            if chat.isOnline {
+                Circle()
+                    .fill(Color.green)
+                    .frame(width: 13, height: 13)
+                    .overlay(Circle().stroke(Color(.systemBackground), lineWidth: 2))
+            }
+        }
+    }
+}
+
+struct ChatStatusPill: View {
+    let status: ChatMatchStatus
+
+    var body: some View {
+        Label(status.rawValue, systemImage: status.icon)
+            .font(.caption2)
+            .fontWeight(.semibold)
+            .foregroundColor(status.color)
+            .padding(.horizontal, 7)
+            .padding(.vertical, 4)
+            .background(status.color.opacity(0.12))
+            .cornerRadius(8)
     }
 }
 
@@ -408,7 +507,8 @@ struct ChatDetailView: View {
     private let quickReplies = [
         "Когда удобно созвониться?",
         "Пришлите план первой тренировки",
-        "Хочу обсудить питание"
+        "Хочу обсудить питание",
+        "Можно провести онлайн?"
     ]
 
     init(chat: Chat) {
@@ -423,6 +523,8 @@ struct ChatDetailView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(spacing: 10) {
+                        chatContextCard
+
                         ForEach(messages) { message in
                             MessageBubble(message: message)
                                 .id(message.id)
@@ -449,21 +551,17 @@ struct ChatDetailView: View {
 
     private var trainerHeader: some View {
         HStack(spacing: 12) {
-            Image(systemName: chat.participantAvatar)
-                .font(.system(size: 34))
-                .foregroundColor(.blue)
-                .frame(width: 44, height: 44)
-                .background(Color.blue.opacity(0.1))
-                .clipShape(Circle())
+            ChatAvatar(chat: chat, size: 48)
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(chat.specialization)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
+                Text(chat.participantName)
+                    .font(.headline)
 
-                Label(chat.matchStatus.rawValue, systemImage: chat.matchStatus.icon)
+                Text(chat.specialization)
                     .font(.caption)
-                    .foregroundColor(chat.matchStatus.color)
+                    .foregroundColor(.secondary)
+
+                ChatStatusPill(status: chat.matchStatus)
             }
 
             Spacer()
@@ -473,12 +571,41 @@ struct ChatDetailView: View {
                     .font(.headline)
                     .foregroundColor(.blue)
                     .frame(width: 40, height: 40)
-                    .background(Color.blue.opacity(0.1))
+                    .background(Color(.systemGray6))
                     .clipShape(Circle())
             }
         }
         .padding()
         .background(Color(.systemBackground))
+    }
+
+    private var chatContextCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Label("Контекст подбора", systemImage: "sparkles")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.blue)
+
+                Spacer()
+
+                if let nextSession = chat.nextSession {
+                    Text(nextSession)
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.green)
+                }
+            }
+
+            Text(chat.matchStatus == .accepted ? "Тренер принял запрос. Можно согласовать пробное занятие, формат и план первой недели." : "Запрос отправлен. Полноценный чат откроется после принятия тренером.")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(14)
+        .background(Color(.systemBackground))
+        .cornerRadius(14)
+        .padding(.bottom, 6)
     }
 
     private var quickRepliesView: some View {
@@ -490,10 +617,10 @@ struct ChatDetailView: View {
                     }
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundColor(.blue)
+                    .foregroundColor(.primary)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 7)
-                    .background(Color.blue.opacity(0.1))
+                    .background(Color(.systemGray6))
                     .cornerRadius(10)
                 }
             }
@@ -506,7 +633,10 @@ struct ChatDetailView: View {
     private var inputBar: some View {
         HStack(spacing: 10) {
             TextField("Сообщение", text: $messageText)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .padding(.horizontal, 14)
+                .frame(height: 42)
+                .background(Color(.systemGray6))
+                .cornerRadius(21)
 
             Button(action: sendMessage) {
                 Image(systemName: "paperplane.fill")
@@ -551,10 +681,12 @@ struct MessageBubble: View {
                 Text(message.text)
                     .font(.subheadline)
                     .foregroundColor(message.isFromCurrentUser ? .white : .primary)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 9)
+                    .padding(.horizontal, 13)
+                    .padding(.vertical, 10)
                     .background(message.isFromCurrentUser ? Color.blue : Color(.systemBackground))
-                    .cornerRadius(14)
+                    .clipShape(
+                        RoundedRectangle(cornerRadius: 17)
+                    )
 
                 Text(formatTime(message.time))
                     .font(.caption2)

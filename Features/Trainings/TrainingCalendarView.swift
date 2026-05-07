@@ -16,6 +16,13 @@ struct TrainingCalendarView: View {
     private var trainingsForSelectedDate: [Training] {
         trainingManager.getTrainings(for: selectedDate)
     }
+
+    private var upcomingTraining: Training? {
+        trainingManager.trainings
+            .filter { $0.date >= Date() }
+            .sorted { $0.date < $1.date }
+            .first
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -24,6 +31,8 @@ struct TrainingCalendarView: View {
             
             // Header with month navigation
             headerView
+
+            upcomingTrainingCard
 
             weeklyPlanCard
 
@@ -140,6 +149,77 @@ extension TrainingCalendarView {
             .padding(.vertical, 10)
         }
         .buttonStyle(PlainButtonStyle())
+        .background(Color(.systemGroupedBackground))
+    }
+
+    private var upcomingTrainingCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Ближайшая тренировка")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    if let training = upcomingTraining {
+                        Text(training.title)
+                            .font(.headline)
+
+                        Text("\(formattedFullDateShort(training.date)) • \(timeString(from: training.date))")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    } else {
+                        Text("Пока ничего не запланировано")
+                            .font(.headline)
+
+                        Text("Добавьте тренировку или выберите занятие из плана недели.")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                }
+
+                Spacer()
+
+                VStack(spacing: 6) {
+                    Image(systemName: upcomingTraining == nil ? "calendar.badge.plus" : icon(for: upcomingTraining?.type ?? .strength))
+                        .font(.title2)
+                        .foregroundColor(.blue)
+                        .frame(width: 46, height: 46)
+                        .background(Color(.systemGray6))
+                        .clipShape(Circle())
+
+                    if let training = upcomingTraining {
+                        Text(training.type.rawValue)
+                            .font(.caption2)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.blue)
+                    }
+                }
+            }
+
+            if upcomingTraining != nil {
+                HStack(spacing: 8) {
+                    CalendarActionButton(title: "Открыть чат", icon: "message.fill", color: .blue)
+                    CalendarActionButton(title: "Перенести", icon: "arrow.triangle.2.circlepath", color: .orange)
+                    CalendarActionButton(title: "Готово", icon: "checkmark", color: .green)
+                }
+            } else {
+                Button(action: addTraining) {
+                    Label("Добавить тренировку", systemImage: "plus")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 42)
+                        .background(Color.blue)
+                        .cornerRadius(12)
+                }
+            }
+        }
+        .padding(16)
+        .background(Color(.systemBackground))
+        .cornerRadius(16)
+        .padding(.horizontal, 16)
+        .padding(.top, 12)
         .background(Color(.systemGroupedBackground))
     }
     
@@ -332,13 +412,24 @@ struct SimpleTrainingCard: View {
     let onDelete: () -> Void
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: icon(for: training.type))
+                    .font(.headline)
+                    .foregroundColor(color(for: training.type))
+                    .frame(width: 42, height: 42)
+                    .background(Color(.systemGray6))
+                    .clipShape(Circle())
+
                 VStack(alignment: .leading, spacing: 4) {
                     Text(training.title)
                         .font(.headline)
                     
-                    Text(timeString(from: training.date))
+                    Text("\(timeString(from: training.date)) • \(training.type.rawValue)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    Label("Ника Морозова • онлайн", systemImage: "person.crop.circle.fill")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -351,18 +442,89 @@ struct SimpleTrainingCard: View {
                 } label: {
                     Image(systemName: "ellipsis")
                         .foregroundColor(.secondary)
+                        .frame(width: 32, height: 32)
+                        .background(Color(.systemGray6))
+                        .clipShape(Circle())
                 }
             }
+
+            HStack(spacing: 8) {
+                TrainingStatusChip(title: training.date < Date() ? "Завершена" : "Запланирована", color: training.date < Date() ? .green : .blue)
+                TrainingStatusChip(title: "\(max(training.exercises.count, 1)) блока", color: .orange)
+                TrainingStatusChip(title: "45 мин", color: .purple)
+            }
         }
-        .padding()
+        .padding(14)
         .background(Color(.systemBackground))
-        .cornerRadius(12)
+        .cornerRadius(14)
     }
     
     private func timeString(from date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm"
         return formatter.string(from: date)
+    }
+
+    private func icon(for type: TrainingType) -> String {
+        switch type {
+        case .strength:
+            return "dumbbell.fill"
+        case .cardio:
+            return "heart.fill"
+        case .yoga:
+            return "figure.mind.and.body"
+        case .stretching:
+            return "figure.cooldown"
+        }
+    }
+
+    private func color(for type: TrainingType) -> Color {
+        switch type {
+        case .strength:
+            return .blue
+        case .cardio:
+            return .red
+        case .yoga:
+            return .purple
+        case .stretching:
+            return .green
+        }
+    }
+}
+
+struct TrainingStatusChip: View {
+    let title: String
+    let color: Color
+
+    var body: some View {
+        Text(title)
+            .font(.caption2)
+            .fontWeight(.semibold)
+            .foregroundColor(color)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(color.opacity(0.12))
+            .cornerRadius(8)
+    }
+}
+
+struct CalendarActionButton: View {
+    let title: String
+    let icon: String
+    let color: Color
+
+    var body: some View {
+        Button(action: {}) {
+            Label(title, systemImage: icon)
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundColor(color)
+                .frame(maxWidth: .infinity)
+                .frame(height: 36)
+                .background(Color(.systemGray6))
+                .cornerRadius(10)
+        }
+        .buttonStyle(PlainButtonStyle())
     }
 }
 
@@ -711,6 +873,38 @@ extension TrainingCalendarView {
         formatter.dateFormat = "d MMMM, EEEE"
         formatter.locale = Locale(identifier: "ru_RU")
         return formatter.string(from: date)
+    }
+
+    private func formattedFullDateShort(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        if calendar.isDateInToday(date) {
+            return "Сегодня"
+        }
+        if calendar.isDateInTomorrow(date) {
+            return "Завтра"
+        }
+        formatter.dateFormat = "d MMMM"
+        formatter.locale = Locale(identifier: "ru_RU")
+        return formatter.string(from: date)
+    }
+
+    private func timeString(from date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: date)
+    }
+
+    private func icon(for type: TrainingType) -> String {
+        switch type {
+        case .strength:
+            return "dumbbell.fill"
+        case .cardio:
+            return "heart.fill"
+        case .yoga:
+            return "figure.mind.and.body"
+        case .stretching:
+            return "figure.cooldown"
+        }
     }
     
     private func daysInMonth() -> [Date?] {
