@@ -42,6 +42,7 @@ final class HomeViewModel: ObservableObject {
             price: "1500",
             priceUnit: "₽/сессия",
             imageName: "person.crop.circle.fill",
+            photoNames: ["trainer_1_1", "trainer_1_2", "trainer_1_3"],
             isOnline: true,
             specializationTags: ["Силовые", "Набор массы", "Для начинающих"],
             location: "Москва, ЦАО",
@@ -65,6 +66,7 @@ final class HomeViewModel: ObservableObject {
             price: "1200",
             priceUnit: "₽/сессия",
             imageName: "person.crop.circle.fill",
+            photoNames: ["trainer_2_1", "trainer_2_2", "trainer_2_3"],
             isOnline: true,
             specializationTags: ["Йога", "Растяжка", "Восстановление"],
             location: "Онлайн",
@@ -88,6 +90,7 @@ final class HomeViewModel: ObservableObject {
             price: "2000",
             priceUnit: "₽/сессия",
             imageName: "person.crop.circle.fill",
+            photoNames: ["trainer_3_1", "trainer_3_2", "trainer_3_3"],
             isOnline: false,
             specializationTags: ["Кроссфит", "Выносливость", "Силовые"],
             location: "Москва, СВАО",
@@ -111,6 +114,7 @@ final class HomeViewModel: ObservableObject {
             price: "1300",
             priceUnit: "₽/сессия",
             imageName: "person.crop.circle.fill",
+            photoNames: ["trainer_4_1", "trainer_4_2", "trainer_4_3"],
             isOnline: true,
             specializationTags: ["Пилатес", "Реабилитация", "Для начинающих"],
             location: "Москва, ЮАО",
@@ -134,6 +138,7 @@ final class HomeViewModel: ObservableObject {
             price: "1800",
             priceUnit: "₽/сессия",
             imageName: "person.crop.circle.fill",
+            photoNames: ["trainer_5_1", "trainer_5_2", "trainer_5_3"],
             isOnline: false,
             specializationTags: ["Бокс", "Кардио", "Выносливость"],
             location: "Москва, ЗАО",
@@ -157,6 +162,7 @@ final class HomeViewModel: ObservableObject {
             price: "1600",
             priceUnit: "₽/сессия",
             imageName: "person.crop.circle.fill",
+            photoNames: ["trainer_6_1", "trainer_6_2", "trainer_6_3"],
             isOnline: true,
             specializationTags: ["Похудение", "КБЖУ", "Онлайн"],
             location: "Онлайн",
@@ -384,6 +390,7 @@ struct Trainer: Identifiable, Equatable {
     let price: String
     let priceUnit: String
     let imageName: String
+    let photoNames: [String]
     let isOnline: Bool
     let specializationTags: [String]
     let location: String

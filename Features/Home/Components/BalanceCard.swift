@@ -49,8 +49,11 @@ struct BalanceCard: View {
         }
         .padding(16)
         .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color(.separator).opacity(0.35), lineWidth: 0.5)
+        )
         .padding(.horizontal, 20)
     }
 }

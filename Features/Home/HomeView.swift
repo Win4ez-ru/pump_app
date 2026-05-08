@@ -299,97 +299,47 @@ struct TrainerSwipeCard: View {
     let onTap: () -> Void
     let onSkip: () -> Void
     let onRequest: () -> Void
+    @State private var selectedPhotoIndex = 0
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .top, spacing: 14) {
-                ZStack {
-                    Circle()
-                        .fill(Color(.systemGray6))
-                        .frame(width: 68, height: 68)
+        VStack(alignment: .leading, spacing: 0) {
+            TrainerPhotoPager(
+                trainer: trainer,
+                matchScore: matchScore,
+                selectedPhotoIndex: $selectedPhotoIndex,
+                onInfo: onTap
+            )
 
-                    Image(systemName: trainer.imageName)
-                        .font(.system(size: 44))
-                        .foregroundColor(.blue)
+            VStack(alignment: .leading, spacing: 18) {
+                HStack(spacing: 10) {
+                    TrainerStatPill(icon: "star.fill", value: String(format: "%.1f", trainer.rating), title: "\(trainer.reviewCount) отзывов", color: .yellow)
+                    TrainerStatPill(icon: "briefcase.fill", value: trainer.experience, title: "стаж", color: .blue)
+                    TrainerStatPill(icon: "banknote.fill", value: "\(trainer.price) ₽", title: "сессия", color: .green)
                 }
 
-                VStack(alignment: .leading, spacing: 5) {
-                    HStack(spacing: 8) {
-                        Text(trainer.name)
-                            .font(.title3)
-                            .fontWeight(.bold)
-                            .lineLimit(1)
+                TrainerDetailsSection(trainer: trainer)
 
-                        if trainer.isOnline {
-                            Circle()
-                                .fill(Color.green)
-                                .frame(width: 8, height: 8)
-                        }
-                    }
-
-                    Text("\(trainer.specialization) • \(trainer.age) • \(trainer.experience)")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .lineLimit(2)
-
-                    Label(trainer.responseTime, systemImage: "bolt.fill")
-                        .font(.caption)
-                        .foregroundColor(.green)
-                }
-
-                Spacer()
-
-                MatchBadge(score: matchScore)
-            }
-
-            Text(trainer.description)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .lineLimit(3)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(trainer.specializationTags, id: \.self) { tag in
-                        Text(tag)
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(Color(.systemGray6))
-                            .foregroundColor(.primary)
-                            .cornerRadius(10)
-                    }
-                }
-            }
-
-            VStack(spacing: 10) {
-                InfoRow(icon: "star.fill", title: "Рейтинг", value: String(format: "%.1f • %d отзывов", trainer.rating, trainer.reviewCount), color: .yellow)
-                InfoRow(icon: "location.fill", title: "Формат", value: trainer.formats.map(\.title).joined(separator: ", "), color: .green)
-                InfoRow(icon: "medal.fill", title: "Достижения", value: trainer.achievements.prefix(2).joined(separator: ", "), color: .orange)
-            }
-
-            HStack(alignment: .bottom) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("\(trainer.price) \(trainer.priceUnit)")
-                        .font(.headline)
-
-                    Text(trainer.location)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-
-                Spacer()
-
-                HStack(spacing: 12) {
+                HStack(spacing: 14) {
                     CircleButton(icon: "xmark", color: .red, action: onSkip)
-                    CircleButton(icon: hasSentRequest ? "checkmark" : "heart.fill", color: .blue, action: onRequest)
+
+                    Button(action: onRequest) {
+                        Label(hasSentRequest ? "Запрос отправлен" : "Отправить запрос", systemImage: hasSentRequest ? "checkmark" : "heart.fill")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                            .background(hasSentRequest ? Color.green : Color.blue)
+                            .cornerRadius(14)
+                    }
                 }
             }
+            .padding(16)
+            .background(Color(.systemBackground))
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, minHeight: 390, alignment: .topLeading)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
         .background(Color(.systemBackground))
         .cornerRadius(16)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
                 .stroke(Color(.separator).opacity(0.35), lineWidth: 0.5)
@@ -406,7 +356,222 @@ struct TrainerSwipeCard: View {
                 .padding(22)
                 .rotationEffect(.degrees(12))
         }
-        .onTapGesture(perform: onTap)
+    }
+}
+
+struct TrainerPhotoPager: View {
+    let trainer: Trainer
+    let matchScore: Int
+    @Binding var selectedPhotoIndex: Int
+    let onInfo: () -> Void
+
+    private var photoCount: Int {
+        max(trainer.photoNames.count, 1)
+    }
+
+    var body: some View {
+        ZStack(alignment: .bottomLeading) {
+            trainerPhoto
+                .frame(height: 500)
+                .clipped()
+                .overlay(
+                    LinearGradient(
+                        colors: [.clear, .black.opacity(0.08), .black.opacity(0.78)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+
+            HStack(spacing: 5) {
+                ForEach(0..<photoCount, id: \.self) { index in
+                    Capsule()
+                        .fill(index == selectedPhotoIndex ? Color.white : Color.white.opacity(0.38))
+                        .frame(height: 4)
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.top, 12)
+            .frame(maxHeight: .infinity, alignment: .top)
+
+            HStack(spacing: 0) {
+                Rectangle()
+                    .fill(Color.clear)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        selectedPhotoIndex = max(0, selectedPhotoIndex - 1)
+                    }
+
+                Rectangle()
+                    .fill(Color.clear)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        selectedPhotoIndex = min(photoCount - 1, selectedPhotoIndex + 1)
+                    }
+            }
+
+            Button(action: onInfo) {
+                Image(systemName: "info.circle.fill")
+                    .font(.title3)
+                    .foregroundColor(.white)
+                    .frame(width: 38, height: 38)
+                    .background(.ultraThinMaterial)
+                    .clipShape(Circle())
+            }
+            .buttonStyle(PlainButtonStyle())
+            .padding(14)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .bottom) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(alignment: .firstTextBaseline, spacing: 7) {
+                            Text(trainer.name)
+                                .font(.system(size: 31, weight: .bold))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.75)
+
+                            Text("\(trainer.age)")
+                                .font(.system(size: 28, weight: .regular))
+                        }
+
+                        Text(trainer.specialization)
+                            .font(.headline)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                    }
+
+                    Spacer()
+
+                    VStack(spacing: 2) {
+                        Text("\(matchScore)%")
+                            .font(.headline)
+                            .fontWeight(.bold)
+
+                        Text("матч")
+                            .font(.caption2)
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 11)
+                    .padding(.vertical, 8)
+                    .background(.ultraThinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+
+                HStack(spacing: 8) {
+                    Label(String(format: "%.1f", trainer.rating), systemImage: "star.fill")
+                    Label(trainer.location, systemImage: "location.fill")
+                    if trainer.isOnline {
+                        Label("онлайн", systemImage: "circle.fill")
+                    }
+                }
+                .font(.caption)
+                .fontWeight(.semibold)
+            }
+            .foregroundColor(.white)
+            .padding(18)
+        }
+    }
+
+    @ViewBuilder
+    private var trainerPhoto: some View {
+        if let photoName = trainer.photoNames[safe: selectedPhotoIndex] ?? trainer.photoNames.first {
+            Image(photoName)
+                .resizable()
+                .scaledToFill()
+        } else {
+            LinearGradient(
+                colors: [.blue.opacity(0.92), .cyan.opacity(0.72)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .overlay {
+                Image(systemName: trainer.imageName)
+                    .font(.system(size: 144, weight: .light))
+                    .foregroundColor(.white.opacity(0.72))
+            }
+        }
+    }
+}
+
+struct TrainerStatPill: View {
+    let icon: String
+    let value: String
+    let title: String
+    let color: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Image(systemName: icon)
+                .font(.caption)
+                .foregroundColor(color)
+
+            Text(value)
+                .font(.subheadline)
+                .fontWeight(.bold)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+
+            Text(title)
+                .font(.caption2)
+                .foregroundColor(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
+    }
+}
+
+struct TrainerDetailsSection: View {
+    let trainer: Trainer
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("О тренере")
+                    .font(.headline)
+
+                Text(trainer.description)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            FlowTags(tags: trainer.specializationTags)
+
+            VStack(spacing: 10) {
+                InfoRow(icon: "person.fill", title: "Пол", value: trainer.gender.title, color: .blue)
+                InfoRow(icon: "figure.strengthtraining.traditional", title: "Формат", value: trainer.formats.map(\.title).joined(separator: ", "), color: .green)
+                InfoRow(icon: "medal.fill", title: "Достижения", value: trainer.achievements.prefix(2).joined(separator: ", "), color: .orange)
+                InfoRow(icon: "bolt.fill", title: "Ответ", value: trainer.responseTime, color: .yellow)
+            }
+        }
+    }
+}
+
+struct TrainerAvatarImage: View {
+    let trainer: Trainer
+
+    var body: some View {
+        if let photoName = trainer.photoNames.first {
+            Image(photoName)
+                .resizable()
+                .scaledToFill()
+        } else {
+            Image(systemName: trainer.imageName)
+                .font(.system(size: 34))
+                .foregroundColor(.blue)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(.systemGray6))
+        }
+    }
+}
+
+private extension Array {
+    subscript(safe index: Int) -> Element? {
+        indices.contains(index) ? self[index] : nil
     }
 }
 
@@ -634,71 +799,192 @@ struct AdvancedSearchView: View {
 
     var body: some View {
         NavigationView {
-            Form {
-                Section("Быстрые фильтры") {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            ForEach(viewModel.quickFilters) { filter in
-                                FilterChip(
-                                    title: filter.name,
-                                    isSelected: viewModel.selectedFilters.contains(filter)
-                                ) {
-                                    viewModel.toggleFilter(filter)
-                                }
-                            }
-                        }
-                        .padding(.vertical, 4)
-                    }
-                }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    filterSummaryCard
+                    genderSection
+                    ageSection
+                    experienceSection
+                    formatSection
+                    quickSpecializationSection
 
-                Section("Тренер") {
-                    Picker("Пол", selection: $viewModel.selectedTrainerGender) {
-                        ForEach(TrainerGender.allCases) { gender in
-                            Text(gender.title).tag(gender)
-                        }
-                    }
-
-                    Stepper("Возраст от \(viewModel.preferredMinAge)", value: $viewModel.preferredMinAge, in: 18...70)
-                    Stepper("Возраст до \(viewModel.preferredMaxAge)", value: $viewModel.preferredMaxAge, in: 18...70)
-                    Stepper("Стаж от \(viewModel.minTrainerExperience) лет", value: $viewModel.minTrainerExperience, in: 0...25)
-                }
-
-                Section("Ваш запрос") {
-                    Picker("Цель", selection: $viewModel.selectedGoal) {
-                        ForEach(FitnessGoal.allCases) { goal in
-                            Text(goal.title).tag(goal)
-                        }
-                    }
-
-                    Picker("Где тренироваться", selection: $viewModel.selectedPlace) {
-                        ForEach(TrainingPlace.allCases) { place in
-                            Text(place.title).tag(place)
-                        }
-                    }
-
-                    Picker("Опыт", selection: $viewModel.selectedExperience) {
-                        ForEach(ClientTrainingExperience.allCases) { experience in
-                            Text(experience.title).tag(experience)
-                        }
-                    }
-                }
-
-                Section {
-                    Button("Сбросить все") {
+                    Button(role: .destructive) {
                         viewModel.resetFilters()
+                    } label: {
+                        Label("Сбросить фильтры", systemImage: "arrow.counterclockwise")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 48)
                     }
-                    .foregroundColor(.red)
+                    .buttonStyle(.bordered)
                 }
+                .padding(20)
             }
+            .background(Color(.systemGroupedBackground))
             .navigationTitle("Фильтры")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Сбросить") {
+                        viewModel.resetFilters()
+                    }
+                }
+
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Готово") {
                         dismiss()
                     }
                 }
             }
+        }
+    }
+
+    private var filterSummaryCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("\(viewModel.filteredTrainers.count) анкет подходит")
+                .font(.title2)
+                .fontWeight(.bold)
+
+            Text("Возраст \(viewModel.preferredMinAge)-\(viewModel.preferredMaxAge), стаж от \(viewModel.minTrainerExperience) лет, \(viewModel.selectedTrainerGender.title.lowercased())")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.systemBackground))
+        .cornerRadius(14)
+    }
+
+    private var genderSection: some View {
+        FilterCard(title: "Пол тренера") {
+            HStack(spacing: 8) {
+                ForEach(TrainerGender.allCases) { gender in
+                    Button(action: { viewModel.selectedTrainerGender = gender }) {
+                        Text(gender.title)
+                            .font(.subheadline)
+                            .fontWeight(viewModel.selectedTrainerGender == gender ? .semibold : .regular)
+                            .foregroundColor(viewModel.selectedTrainerGender == gender ? .white : .primary)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 42)
+                            .background(viewModel.selectedTrainerGender == gender ? Color.blue : Color(.systemGray6))
+                            .cornerRadius(10)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+        }
+    }
+
+    private var ageSection: some View {
+        FilterCard(title: "Возраст") {
+            VStack(spacing: 16) {
+                FilterValueRow(title: "От", value: "\(viewModel.preferredMinAge) лет")
+                Slider(value: minAgeBinding, in: 18...Double(viewModel.preferredMaxAge), step: 1)
+
+                FilterValueRow(title: "До", value: "\(viewModel.preferredMaxAge) лет")
+                Slider(value: maxAgeBinding, in: Double(viewModel.preferredMinAge)...70, step: 1)
+            }
+        }
+    }
+
+    private var experienceSection: some View {
+        FilterCard(title: "Стаж работы") {
+            VStack(spacing: 12) {
+                FilterValueRow(title: "Минимум", value: "\(viewModel.minTrainerExperience) лет")
+                Slider(value: experienceBinding, in: 0...25, step: 1)
+            }
+        }
+    }
+
+    private var formatSection: some View {
+        FilterCard(title: "Формат тренировок") {
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
+                ForEach(TrainingPlace.allCases) { place in
+                    Button(action: { viewModel.selectedPlace = place }) {
+                        Text(place.title)
+                            .font(.subheadline)
+                            .fontWeight(viewModel.selectedPlace == place ? .semibold : .regular)
+                            .foregroundColor(viewModel.selectedPlace == place ? .white : .primary)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 42)
+                            .background(viewModel.selectedPlace == place ? Color.blue : Color(.systemGray6))
+                            .cornerRadius(10)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+        }
+    }
+
+    private var quickSpecializationSection: some View {
+        FilterCard(title: "Специализация") {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 112), spacing: 8)], alignment: .leading, spacing: 8) {
+                ForEach(viewModel.quickFilters) { filter in
+                    FilterChip(
+                        title: filter.name,
+                        isSelected: viewModel.selectedFilters.contains(filter)
+                    ) {
+                        viewModel.toggleFilter(filter)
+                    }
+                }
+            }
+        }
+    }
+
+    private var minAgeBinding: Binding<Double> {
+        Binding(
+            get: { Double(viewModel.preferredMinAge) },
+            set: { viewModel.preferredMinAge = min(Int($0), viewModel.preferredMaxAge) }
+        )
+    }
+
+    private var maxAgeBinding: Binding<Double> {
+        Binding(
+            get: { Double(viewModel.preferredMaxAge) },
+            set: { viewModel.preferredMaxAge = max(Int($0), viewModel.preferredMinAge) }
+        )
+    }
+
+    private var experienceBinding: Binding<Double> {
+        Binding(
+            get: { Double(viewModel.minTrainerExperience) },
+            set: { viewModel.minTrainerExperience = Int($0) }
+        )
+    }
+}
+
+struct FilterCard<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text(title)
+                .font(.headline)
+
+            content
+        }
+        .padding(16)
+        .background(Color(.systemBackground))
+        .cornerRadius(14)
+    }
+}
+
+struct FilterValueRow: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        HStack {
+            Text(title)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+
+            Spacer()
+
+            Text(value)
+                .font(.subheadline)
+                .fontWeight(.semibold)
         }
     }
 }
@@ -880,11 +1166,8 @@ struct TrainerDetailView: View {
     private var trainerHero: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top, spacing: 14) {
-                Image(systemName: trainer.imageName)
-                    .font(.system(size: 52))
-                    .foregroundColor(.blue)
+                TrainerAvatarImage(trainer: trainer)
                     .frame(width: 72, height: 72)
-                    .background(Color.blue.opacity(0.1))
                     .clipShape(Circle())
 
                 VStack(alignment: .leading, spacing: 5) {

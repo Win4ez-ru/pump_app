@@ -16,6 +16,17 @@ struct MainTabView: View {
     }
 
     var body: some View {
+        Group {
+            if authService.currentUser?.role == .trainer {
+                TrainerModeView()
+            } else {
+                clientTabs
+            }
+        }
+        .accentColor(.blue)
+    }
+
+    private var clientTabs: some View {
         TabView(selection: $selectedTab) {
             NavigationView {
                 HomeView {
@@ -71,7 +82,6 @@ struct MainTabView: View {
             }
             .tag(MainTab.profile)
         }
-        .accentColor(.blue)
     }
 }
 
