@@ -91,7 +91,7 @@ class AuthService: ObservableObject {
         setupGuestUser()
     }
     
-    func signUp(email: String, password: String, username: String) async throws {
+    func signUp(email: String, password: String, username: String, role: UserRole) async throws {
         isLoading = true
         defer { isLoading = false }
         
@@ -100,7 +100,8 @@ class AuthService: ObservableObject {
         let newUser = User(
             id: authResult.user.uid,
             email: email,
-            username: username
+            username: username,
+            role: role
         )
         
         try await saveUserToFirestore(user: newUser)
@@ -131,7 +132,8 @@ class AuthService: ObservableObject {
         let guestUser = User(
             id: "guest_\(UUID().uuidString)",
             email: "guest@example.com",
-            username: "Гость"
+            username: "Гость",
+            role: .client
         )
         authState = .guest(guestUser)
         isLoading = false
@@ -142,6 +144,7 @@ class AuthService: ObservableObject {
             "id": user.id,
             "email": user.email,
             "username": user.username ?? "",
+            "role": user.role.rawValue,
             "createdAt": Timestamp(date: user.createdAt)
         ]
         
@@ -155,12 +158,14 @@ class AuthService: ObservableObject {
             if let data = document.data(), document.exists {
                 let username = data["username"] as? String
                 let email = data["email"] as? String ?? ""
+                let role = UserRole(rawValue: data["role"] as? String ?? "") ?? .client
                 let createdAt = (data["createdAt"] as? Timestamp)?.dateValue() ?? Date()
                 
                 let user = User(
                     id: userId,
                     email: email,
                     username: username,
+                    role: role,
                     createdAt: createdAt
                 )
                 

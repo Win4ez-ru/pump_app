@@ -44,6 +44,13 @@
 		5EF546A32EDC2F97006736FB /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EAB707E2ED8AE670036DF6F /* SettingsView.swift */; };
 		6DD30E012F06FA0000CA3753 /* TrainerMatchingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DD30E002F06FA0000CA3753 /* TrainerMatchingView.swift */; };
 		6DD30E042F07011000CA3753 /* ClientFitnessProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DD30E032F07011000CA3753 /* ClientFitnessProfile.swift */; };
+		6DD30E072F07A10000CA3753 /* TrainerModeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DD30E062F07A10000CA3753 /* TrainerModeView.swift */; };
+		6DD30E092F07A20000CA3753 /* TrainerScheduleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DD30E082F07A20000CA3753 /* TrainerScheduleView.swift */; };
+		6DD30E0B2F07A30000CA3753 /* TrainerChatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DD30E0A2F07A30000CA3753 /* TrainerChatsView.swift */; };
+		6DD30E0D2F07A40000CA3753 /* TrainerRequestsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DD30E0C2F07A40000CA3753 /* TrainerRequestsView.swift */; };
+		6DD30E0F2F07A50000CA3753 /* TrainerClientsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DD30E0E2F07A50000CA3753 /* TrainerClientsView.swift */; };
+		6DD30E112F07A60000CA3753 /* TrainerProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DD30E102F07A60000CA3753 /* TrainerProfileView.swift */; };
+		6DD30E132F07A70000CA3753 /* TrainerComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DD30E122F07A70000CA3753 /* TrainerComponents.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -83,6 +90,13 @@
 		5EF5469B2EDC2E6D006736FB /* WeightData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeightData.swift; sourceTree = "<group>"; };
 		6DD30E002F06FA0000CA3753 /* TrainerMatchingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainerMatchingView.swift; sourceTree = "<group>"; };
 		6DD30E032F07011000CA3753 /* ClientFitnessProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientFitnessProfile.swift; sourceTree = "<group>"; };
+		6DD30E062F07A10000CA3753 /* TrainerModeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainerModeView.swift; sourceTree = "<group>"; };
+		6DD30E082F07A20000CA3753 /* TrainerScheduleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainerScheduleView.swift; sourceTree = "<group>"; };
+		6DD30E0A2F07A30000CA3753 /* TrainerChatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainerChatsView.swift; sourceTree = "<group>"; };
+		6DD30E0C2F07A40000CA3753 /* TrainerRequestsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainerRequestsView.swift; sourceTree = "<group>"; };
+		6DD30E0E2F07A50000CA3753 /* TrainerClientsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainerClientsView.swift; sourceTree = "<group>"; };
+		6DD30E102F07A60000CA3753 /* TrainerProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainerProfileView.swift; sourceTree = "<group>"; };
+		6DD30E122F07A70000CA3753 /* TrainerComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainerComponents.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -153,6 +167,7 @@
 			isa = PBXGroup;
 			children = (
 				6DD30DF82F06F82E00CA3753 /* Career */,
+				6DD30E052F07A10000CA3753 /* TrainerMode */,
 				6DD30E022F06FA0000CA3753 /* TrainerMatching */,
 				5EF5468D2EDC2B4D006736FB /* Home */,
 				5EF5467E2EDC2652006736FB /* Settings */,
@@ -275,6 +290,20 @@
 			path = TrainerMatching;
 			sourceTree = "<group>";
 		};
+		6DD30E052F07A10000CA3753 /* TrainerMode */ = {
+			isa = PBXGroup;
+			children = (
+				6DD30E062F07A10000CA3753 /* TrainerModeView.swift */,
+				6DD30E0C2F07A40000CA3753 /* TrainerRequestsView.swift */,
+				6DD30E082F07A20000CA3753 /* TrainerScheduleView.swift */,
+				6DD30E0A2F07A30000CA3753 /* TrainerChatsView.swift */,
+				6DD30E0E2F07A50000CA3753 /* TrainerClientsView.swift */,
+				6DD30E102F07A60000CA3753 /* TrainerProfileView.swift */,
+				6DD30E122F07A70000CA3753 /* TrainerComponents.swift */,
+			);
+			path = TrainerMode;
+			sourceTree = "<group>";
+		};
 		5EF546922EDC2B76006736FB /* Components */ = {
 			isa = PBXGroup;
 			children = (
@@ -394,6 +423,13 @@
 				5EAB70942ED8AE670036DF6F /* AuthService.swift in Sources */,
 				5EAB70952ED8AE670036DF6F /* LoginView.swift in Sources */,
 				6DD30E042F07011000CA3753 /* ClientFitnessProfile.swift in Sources */,
+				6DD30E072F07A10000CA3753 /* TrainerModeView.swift in Sources */,
+				6DD30E092F07A20000CA3753 /* TrainerScheduleView.swift in Sources */,
+				6DD30E0B2F07A30000CA3753 /* TrainerChatsView.swift in Sources */,
+				6DD30E0D2F07A40000CA3753 /* TrainerRequestsView.swift in Sources */,
+				6DD30E0F2F07A50000CA3753 /* TrainerClientsView.swift in Sources */,
+				6DD30E112F07A60000CA3753 /* TrainerProfileView.swift in Sources */,
+				6DD30E132F07A70000CA3753 /* TrainerComponents.swift in Sources */,
 				5EF5468F2EDC2B5F006736FB /* HomeView.swift in Sources */,
 				5EF5469F2EDC2F81006736FB /* Buttons.swift in Sources */,
 				5EAB709E2ED8B1900036DF6F /* pump_appApp.swift in Sources */,

@@ -9,6 +9,7 @@ class AuthenticationViewModel: ObservableObject {
     @Published var password = ""
     @Published var username = ""
     @Published var confirmPassword = ""
+    @Published var selectedRole: UserRole = .client
     @Published var errorMessage = ""
     @Published var isLoading = false
     
@@ -66,7 +67,7 @@ class AuthenticationViewModel: ObservableObject {
         errorMessage = ""
         
         do {
-            try await authService.signUp(email: email, password: password, username: username)
+            try await authService.signUp(email: email, password: password, username: username, role: selectedRole)
             clearForm()
             return true
         } catch {
@@ -100,6 +101,7 @@ class AuthenticationViewModel: ObservableObject {
         password = ""
         username = ""
         confirmPassword = ""
+        selectedRole = .client
         isLoading = false
     }
     

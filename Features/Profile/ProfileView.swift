@@ -224,7 +224,7 @@ struct ProfileView: View {
                 }
 
                 HStack(spacing: 8) {
-                    ProfileStatusPill(title: authManager.hasSkippedLogin ? "Гость" : "Клиент", color: authManager.hasSkippedLogin ? .orange : .blue)
+                    ProfileStatusPill(title: authManager.hasSkippedLogin ? "Гость" : (user?.role.title ?? "Клиент"), color: authManager.hasSkippedLogin ? .orange : .blue)
                     ProfileStatusPill(title: profileViewModel.fitnessProfile.trainingPlace.title, color: .green)
                     ProfileStatusPill(title: "\(profileViewModel.fitnessProfile.weeklyTrainingGoal)x/нед", color: .purple)
                 }
