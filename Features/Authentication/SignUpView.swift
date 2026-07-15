@@ -20,7 +20,7 @@ struct SignUpView: View {
                     // Form
                     formView
                     
-                    // Sign Up Button - ИСПРАВЛЯЕМ
+                    // Sign-up action
                     PrimaryButton(
                         title: "Зарегистрироваться",
                         action: {
@@ -79,7 +79,7 @@ struct SignUpView: View {
     
     private var formView: some View {
         VStack(spacing: 18) {
-            // ЗАМЕНЯЕМ кастомные поля на стандартные
+            // Standard fields keep the form familiar and accessible.
             TextField("Имя пользователя", text: $viewModel.username)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
             
