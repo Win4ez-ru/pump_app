@@ -5,6 +5,8 @@
 
 # Xcode
 build/
+DerivedData/
+.swiftpm/
 *.pbxuser
 *.mode1v3
 *.mode2v3
@@ -40,3 +42,10 @@ fastlane/test_output
 .DS_Store
 *.DS_Store
 **/.DS_Store
+
+# Local configuration and credentials
+.env
+.env.*
+*.p8
+*.p12
+*.mobileprovision

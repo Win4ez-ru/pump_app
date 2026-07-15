@@ -10,7 +10,7 @@
 		5EAB70822ED8AE670036DF6F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EAB70802ED8AE670036DF6F /* ContentView.swift */; };
 		5EAB70832ED8AE670036DF6F /* TrainingEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EAB70772ED8AE670036DF6F /* TrainingEditView.swift */; };
 		5EAB70862ED8AE670036DF6F /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EAB70692ED8AE670036DF6F /* User.swift */; };
-		5EAB70882ED8AE670036DF6F /* SingUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EAB70702ED8AE670036DF6F /* SingUpView.swift */; };
+		5EAB70882ED8AE670036DF6F /* SignUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EAB70702ED8AE670036DF6F /* SignUpView.swift */; };
 		5EAB708A2ED8AE670036DF6F /* TrainingCalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EAB70762ED8AE670036DF6F /* TrainingCalendarView.swift */; };
 		5EAB708B2ED8AE670036DF6F /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EAB707C2ED8AE670036DF6F /* MainTabView.swift */; };
 		5EAB708C2ED8AE670036DF6F /* ChatListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EAB707B2ED8AE670036DF6F /* ChatListView.swift */; };
@@ -56,7 +56,7 @@
 		5EAB706C2ED8AE670036DF6F /* AuthenticationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationViewModel.swift; sourceTree = "<group>"; };
 		5EAB706E2ED8AE670036DF6F /* AuthenticationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationView.swift; sourceTree = "<group>"; };
 		5EAB706F2ED8AE670036DF6F /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
-		5EAB70702ED8AE670036DF6F /* SingUpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingUpView.swift; sourceTree = "<group>"; };
+		5EAB70702ED8AE670036DF6F /* SignUpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignUpView.swift; sourceTree = "<group>"; };
 		5EAB70762ED8AE670036DF6F /* TrainingCalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingCalendarView.swift; sourceTree = "<group>"; };
 		5EAB70772ED8AE670036DF6F /* TrainingEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingEditView.swift; sourceTree = "<group>"; };
 		5EAB707B2ED8AE670036DF6F /* ChatListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatListView.swift; sourceTree = "<group>"; };
@@ -196,7 +196,7 @@
 				5EAB706C2ED8AE670036DF6F /* AuthenticationViewModel.swift */,
 				5EAB706E2ED8AE670036DF6F /* AuthenticationView.swift */,
 				5EAB706F2ED8AE670036DF6F /* LoginView.swift */,
-				5EAB70702ED8AE670036DF6F /* SingUpView.swift */,
+				5EAB70702ED8AE670036DF6F /* SignUpView.swift */,
 			);
 			path = Authentication;
 			sourceTree = "<group>";
@@ -372,7 +372,7 @@
 				5EF546912EDC2B6B006736FB /* HomeViewModel.swift in Sources */,
 				5EAB70832ED8AE670036DF6F /* TrainingEditView.swift in Sources */,
 				5EAB70862ED8AE670036DF6F /* User.swift in Sources */,
-				5EAB70882ED8AE670036DF6F /* SingUpView.swift in Sources */,
+				5EAB70882ED8AE670036DF6F /* SignUpView.swift in Sources */,
 				5EAB708A2ED8AE670036DF6F /* TrainingCalendarView.swift in Sources */,
 				5EF546A12EDC2F88006736FB /* WeightProgressChart.swift in Sources */,
 				5EAB708B2ED8AE670036DF6F /* MainTabView.swift in Sources */,
